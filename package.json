@@ -11,5 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest"
+  },
+  "devDependencies": {
+    "postcss-nested": "^7.0.2"
   }
-} 
+}

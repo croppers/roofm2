@@ -4,7 +4,6 @@ import os
 from dotenv import load_dotenv
 import httpx
 from typing import Dict, Any
-from cv import calculate_meters_per_pixel, process_satellite_image, calculate_real_area
 from power_api import fetch_power_data, calculate_monthly_solar_energy, calculate_monthly_rainfall_harvest
 
 # Load environment variables
@@ -81,46 +80,6 @@ async def get_satellite_image(lat: float, lon: float, zoom: int = 20):
             return response.content
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Satellite image request failed: {str(e)}")
-
-@app.get("/api/area")
-async def calculate_area(lat: float, lon: float, zoom: int = 20):
-    """
-    Endpoint to calculate roof area from satellite image
-    """
-    maps_key = os.getenv("STATIC_MAP_KEY")
-    if not maps_key:
-        raise HTTPException(status_code=500, detail="Static Maps API key not configured")
-    
-    try:
-        # Fetch satellite image
-        url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={zoom}&size=640x640&maptype=satellite&key={maps_key}"
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"Failed to fetch satellite image: {response.text}"
-                )
-            
-            # Process image with OpenCV
-            area_px, contour_points = process_satellite_image(response.content)
-            
-            # Calculate meters per pixel
-            meters_per_pixel = calculate_meters_per_pixel(lat, zoom)
-            
-            # Calculate real-world area
-            area_m2, area_ft2 = calculate_real_area(area_px, meters_per_pixel)
-            
-            return {
-                "area_px": area_px,
-                "area_m2": area_m2,
-                "area_ft2": area_ft2,
-                "contour": contour_points,
-                "meters_per_pixel": meters_per_pixel
-            }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Area calculation failed: {str(e)}")
 
 @app.get("/api/climate")
 async def get_climate_data(lat: float, lon: float, area_m2: float):

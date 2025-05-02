@@ -10,6 +10,13 @@ load_dotenv()
 POWER_BASE = os.getenv("NEXT_PUBLIC_POWER_BASE", "https://power.larc.nasa.gov/api")
 RUNOFF_COEFF = float(os.getenv("NEXT_PUBLIC_RUNOFF_COEFF", "0.9"))
 
+# Map of month numbers to month abbreviations used by NASA POWER API
+MONTH_ABBR = {
+    1: 'JAN', 2: 'FEB', 3: 'MAR', 4: 'APR',
+    5: 'MAY', 6: 'JUN', 7: 'JUL', 8: 'AUG',
+    9: 'SEP', 10: 'OCT', 11: 'NOV', 12: 'DEC'
+}
+
 async def fetch_power_data(lat: float, lon: float) -> Dict[str, Any]:
     """
     Fetch climatology data from NASA POWER API
@@ -23,7 +30,7 @@ async def fetch_power_data(lat: float, lon: float) -> Dict[str, Any]:
     """
     url = f"{POWER_BASE}/temporal/climatology/point"
     params = {
-        "parameters": "ALLSKY_SFC_SW_DWN,PRECTOT",
+        "parameters": "ALLSKY_SFC_SW_DWN,PRECTOTCORR",  # Updated to use PRECTOTCORR
         "community": "SB",
         "longitude": lon,
         "latitude": lat,
@@ -56,20 +63,33 @@ def calculate_monthly_solar_energy(power_data: Dict[str, Any], roof_area_m2: flo
     # Current year for calculating days in month
     current_year = 2024  # Using a leap year for February
     
+    # Efficiency factor for solar panels (typical values: 15-20%)
+    SOLAR_EFFICIENCY = 0.15  # 15% solar panel efficiency
+    
+    # System losses (inverter efficiency, wiring, etc.)
+    SYSTEM_EFFICIENCY = 0.80  # 80% system efficiency
+    
     total_annual_kwh = 0
     
     for month_num in range(1, 13):
         month_name = calendar.month_name[month_num]
         days_in_month = calendar.monthrange(current_year, month_num)[1]
         
+        # Get the month abbreviation for the API response (JAN, FEB, etc.)
+        month_abbr = MONTH_ABBR[month_num]
+        
         # Daily radiation for this month (kWh/m²/day)
-        daily_radiation = solar_data[f"{month_num:02d}"]
+        daily_radiation = solar_data[month_abbr]
         
         # Monthly radiation (kWh/m²/month)
         monthly_radiation = daily_radiation * days_in_month
         
-        # Total energy production for the roof area (kWh)
-        monthly_energy_kwh = monthly_radiation * roof_area_m2
+        # Total energy production for the roof area (kWh), including efficiency factors
+        # Handle case where roof_area_m2 might be 0
+        if roof_area_m2 <= 0:
+            monthly_energy_kwh = 0
+        else:
+            monthly_energy_kwh = monthly_radiation * roof_area_m2 * SOLAR_EFFICIENCY * SYSTEM_EFFICIENCY
         
         # Add to annual total
         total_annual_kwh += monthly_energy_kwh
@@ -102,8 +122,8 @@ def calculate_monthly_rainfall_harvest(power_data: Dict[str, Any], roof_area_m2:
     """
     monthly_data = []
     
-    # Get precipitation data (PRECTOT is in mm/day)
-    precip_data = power_data["properties"]["parameter"]["PRECTOT"]
+    # Get precipitation data (PRECTOTCORR is in mm/day)
+    precip_data = power_data["properties"]["parameter"]["PRECTOTCORR"]  # Updated to use PRECTOTCORR
     
     # Current year for calculating days in month
     current_year = 2024  # Using a leap year for February
@@ -115,8 +135,11 @@ def calculate_monthly_rainfall_harvest(power_data: Dict[str, Any], roof_area_m2:
         month_name = calendar.month_name[month_num]
         days_in_month = calendar.monthrange(current_year, month_num)[1]
         
+        # Get the month abbreviation for the API response (JAN, FEB, etc.)
+        month_abbr = MONTH_ABBR[month_num]
+        
         # Daily precipitation for this month (mm/day)
-        daily_precip_mm = precip_data[f"{month_num:02d}"]
+        daily_precip_mm = precip_data[month_abbr]
         
         # Monthly precipitation (mm/month)
         monthly_precip_mm = daily_precip_mm * days_in_month
@@ -124,8 +147,12 @@ def calculate_monthly_rainfall_harvest(power_data: Dict[str, Any], roof_area_m2:
         # Convert mm to m (1 mm = 0.001 m)
         monthly_precip_m = monthly_precip_mm * 0.001
         
-        # Calculate water volume (m³) = area (m²) × depth (m) × runoff coefficient
-        water_volume_m3 = roof_area_m2 * monthly_precip_m * RUNOFF_COEFF
+        # Handle case where roof_area_m2 might be 0
+        if roof_area_m2 <= 0:
+            water_volume_m3 = 0
+        else:
+            # Calculate water volume (m³) = area (m²) × depth (m) × runoff coefficient
+            water_volume_m3 = roof_area_m2 * monthly_precip_m * RUNOFF_COEFF
         
         # Convert to liters (1 m³ = 1000 L)
         water_volume_liters = water_volume_m3 * 1000
