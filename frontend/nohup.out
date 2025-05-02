@@ -1,0 +1,15 @@
+
+> roofm2-frontend@0.1.0 dev
+> next dev
+
+You are using Node.js 18.16.1. For Next.js, Node.js version "^18.18.0 || ^19.8.0 || >= 20.0.0" is required.
+
+> roofm2-frontend@0.1.0 dev
+> next dev --ignore-node-version
+
+You are using Node.js 18.16.1. For Next.js, Node.js version "^18.18.0 || ^19.8.0 || >= 20.0.0" is required.
+
+> roofm2-frontend@0.1.0 dev
+> next dev
+
+You are using Node.js 18.16.1. For Next.js, Node.js version "^18.18.0 || ^19.8.0 || >= 20.0.0" is required.

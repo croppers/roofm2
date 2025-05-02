@@ -4,6 +4,9 @@
 
 A browser-only workflow that allows users to enter an address and get roof area measurements, solar energy estimates, and rainwater harvest predictions without requiring login or payment.
 
+### Support
+If this tool saved you time, consider [buying me a coffee](https://www.buymeacoffee.com/cropper) to keep the APIs and hosting running. Thanks! ☕
+
 ## Features
 
 - Address to roof area conversion using satellite imagery and computer vision
