@@ -87,9 +87,9 @@ export default function HomeContent() {
                   Object.keys(monthlyPrecip).length > 0;
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 sm:p-8 pb-12 sm:pb-20 gap-8 sm:gap-16 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <div className="w-full max-w-xl flex justify-center">
+        <div className="w-full max-w-xl px-4 sm:px-0 flex justify-center">
           <Image 
             src="/@roofm2_logo.svg" 
             alt="Roofm² Logo" 
@@ -99,26 +99,24 @@ export default function HomeContent() {
             className="mb-4"
           />
         </div>
-        <div className="w-full max-w-xl mb-4">
+        <div className="w-full max-w-xl mb-4 px-4 sm:px-0">
           <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
         </div>
-        <div className="mb-2 w-full max-w-xl">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={clearPolygons} 
-              className="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
-            >
-              Clear Polygons
-            </button>
-            {areaSqm !== null && (
-              <div className="text-center font-semibold text-lg text-gray-700">
-                {formattedArea}
-              </div>
-            )}
-            {areaSqm !== null && <UnitToggle />}
-          </div>
+        <div className="mb-2 w-full max-w-xl flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-0">
+          <button 
+            onClick={clearPolygons} 
+            className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+          >
+            Clear Polygons
+          </button>
+          {areaSqm !== null && (
+            <div className="text-center font-semibold text-lg text-gray-700">
+              {formattedArea}
+            </div>
+          )}
+          {areaSqm !== null && <UnitToggle />}
         </div>
-        <div className="w-full max-w-xl mb-4">
+        <div className="w-full max-w-xl mb-4 px-4 sm:px-0">
           <Map center={center} onPolygonComplete={handlePolygonComplete} />
         </div>
         {isLoading && areaSqm != null && (
