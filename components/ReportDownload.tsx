@@ -35,10 +35,6 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const totalSolar = solarData.reduce((sum,v) => sum+v, 0);
   const totalPrecip = precipData.reduce((sum,v) => sum+v, 0);
   
-  // Convert from W to kW for the energy calculation
-  const totalEnergyKW = (totalSolar * areaSqm) / 1000;
-  const totalWater = totalPrecip * areaSqm; // mm * m² = liters
-  
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,
