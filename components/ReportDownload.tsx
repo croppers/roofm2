@@ -39,7 +39,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         display: true,
         text: 'Energy and Precipitation Climatologies',
         font: {
-          size: 16,
+          size: 14,
           weight: 'bold'
         },
         padding: {
@@ -67,7 +67,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         display: true,
         text: 'Adjusted for Selected Roof Area',
         font: {
-          size: 16,
+          size: 14,
           weight: 'bold'
         },
         padding: {
@@ -126,15 +126,15 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   };
 
   return (
-    <div ref={containerRef} className="p-4 bg-white rounded shadow">
-      <div className="mb-4">
+    <div ref={containerRef} className="p-3 sm:p-4 bg-white rounded shadow">
+      <div className="mb-4 w-full h-64 sm:h-80 md:h-96">
         <Line options={combinedOptions} data={combinedData} />
       </div>
-      <div className="mb-4">
+      <div className="mb-4 w-full h-64 sm:h-80 md:h-96">
         <Line options={areaOptions} data={areaData} />
       </div>
       <div className="flex justify-end">
-        <button onClick={downloadPDF} className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button onClick={downloadPDF} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
           Save Report
         </button>
       </div>

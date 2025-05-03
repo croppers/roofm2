@@ -32,10 +32,10 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
   });
 
   if (loadError) {
-    return <div>Error loading maps</div>;
+    return <div className="text-center p-4 bg-red-100 text-red-700 rounded">Error loading maps</div>;
   }
   if (!isLoaded) {
-    return <div>Loading Maps...</div>;
+    return <div className="text-center p-4">Loading Maps...</div>;
   }
 
   const handlePolygonComplete = (polygon: google.maps.Polygon) => {
@@ -57,9 +57,13 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
         options={{
           mapTypeId: google.maps.MapTypeId.SATELLITE,
           tilt: 0,
-          // Show only essential controls
-          disableDefaultUI: true,
-          zoomControl: true
+          disableDefaultUI: false, // Enable default UI
+          zoomControl: true,
+          mapTypeControl: false,
+          scaleControl: true,
+          streetViewControl: false,
+          rotateControl: false,
+          fullscreenControl: true
         }}
       >
         <DrawingManager
