@@ -2,9 +2,21 @@
 import React from 'react';
 import { GoogleMap, useJsApiLoader, DrawingManager } from '@react-google-maps/api';
 
+// Calculate the height for a square aspect ratio (1:1)
+// For a container with 100% width, the height should be equal to width
 const containerStyle = {
   width: '100%',
-  height: '400px'
+  height: 0, // Will be set dynamically based on width
+  paddingBottom: '100%', // This creates a 1:1 aspect ratio (square)
+  position: 'relative' as const // TypeScript needs this type assertion
+};
+
+const mapStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%'
 };
 
 interface MapProps {
@@ -37,27 +49,29 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
   };
 
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={center}
-      zoom={18}
-      options={{
-        mapTypeId: google.maps.MapTypeId.SATELLITE,
-        tilt: 0,
-        disableDefaultUI: true
-      }}
-    >
-      <DrawingManager
-        drawingMode={google.maps.drawing.OverlayType.POLYGON}
-        onPolygonComplete={handlePolygonComplete}
+    <div style={containerStyle}>
+      <GoogleMap
+        mapContainerStyle={mapStyle}
+        center={center}
+        zoom={18}
         options={{
-          drawingControl: true,
-          drawingControlOptions: {
-            position: google.maps.ControlPosition.TOP_CENTER,
-            drawingModes: [google.maps.drawing.OverlayType.POLYGON]
-          }
+          mapTypeId: google.maps.MapTypeId.SATELLITE,
+          tilt: 0,
+          disableDefaultUI: true
         }}
-      />
-    </GoogleMap>
+      >
+        <DrawingManager
+          drawingMode={google.maps.drawing.OverlayType.POLYGON}
+          onPolygonComplete={handlePolygonComplete}
+          options={{
+            drawingControl: true,
+            drawingControlOptions: {
+              position: google.maps.ControlPosition.TOP_CENTER,
+              drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+            }
+          }}
+        />
+      </GoogleMap>
+    </div>
   );
 } 

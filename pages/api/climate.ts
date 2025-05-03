@@ -21,6 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const data = await response.json();
 
+    console.log("Raw NASA POWER data:", JSON.stringify(data, null, 2));
+
     // Map NASA POWER month keys (JAN, FEB...) to numbers (1, 2...)
     const mapKeysToNumbers = (obj: Record<string, number> | undefined): Record<string, number> => {
       if (!obj) return {};
@@ -35,10 +37,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     const solarRaw = data.properties?.parameter?.ALLSKY_SFC_SW_DWN;
-    const precipRaw = data.properties?.parameter?.PRECTOT;
+    const precipRaw = data.properties?.parameter?.PRECTOTCORR;
+
+    console.log("Extracted Precip Raw:", precipRaw);
 
     const monthlySolar = mapKeysToNumbers(solarRaw);
     const monthlyPrecip = mapKeysToNumbers(precipRaw);
+
+    console.log("Mapped Precip:", monthlyPrecip);
 
     return res.status(200).json({ solar: monthlySolar, precipitation: monthlyPrecip });
   } catch (err: any) {

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <style>
+    .text { font-family: Arial, sans-serif; font-weight: bold; }
+    .roof { fill: #3b82f6; }
+    .square { fill: #10b981; }
+  </style>
+  <polygon class="roof" points="30,10 10,40 50,40" />
+  <rect class="square" x="55" y="30" width="10" height="10" />
+  <text x="70" y="38" class="text" font-size="24">Roofm²</text>
+</svg> 

@@ -35,15 +35,21 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   // Annual totals
   const totalSolar = solarData.reduce((sum,v) => sum+v, 0);
   const totalPrecip = precipData.reduce((sum,v) => sum+v, 0);
-  const totalEnergy = totalSolar * areaSqm;
+  
+  // Convert from W to kW for the energy calculation
+  const totalEnergyKW = (totalSolar * areaSqm) / 1000;
   const totalWater = totalPrecip * areaSqm; // mm * m² = liters
+  
+  // Calculate daily averages (divide by 365 for annual average per day)
+  const dailyEnergyKW = totalEnergyKW / 365;
+  const dailyWaterL = totalWater / 365;
 
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,
     scales: {
-      y: { position: 'left', title: { display: true, text: 'Solar (W/m²)' } },
-      y1:{ position: 'right', title: { display: true, text: 'Precip (mm)' }, grid:{ drawOnChartArea:false } }
+      y: { position: 'left', title: { display: true, text: 'Solar (W/m²/day)' } },
+      y1:{ position: 'right', title: { display: true, text: 'Precip (mm/day)' }, grid:{ drawOnChartArea:false } }
     }
   };
   const combinedData = {
@@ -57,30 +63,53 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const areaOptions: ChartOptions<'line'> = {
     responsive: true,
     scales: {
-      y: { position: 'left', title: { display: true, text: 'Energy (W)' } },
-      y1: { position: 'right', title: { display: true, text: 'Water (L)' }, grid: { drawOnChartArea: false } }
+      y: { position: 'left', title: { display: true, text: 'Energy (kW/day)' } },
+      y1: { position: 'right', title: { display: true, text: 'Water (L/day)' }, grid: { drawOnChartArea: false } }
     }
   };
   const areaData = {
     labels: months,
     datasets: [
-      { label: 'Energy (W)', data: solarData.map(v => v * areaSqm), borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
-      { label: 'Water (L)', data: precipData.map(v => v * areaSqm), borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
+      { label: 'Energy (kW/day)', data: solarData.map(v => (v * areaSqm) / 1000), borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
+      { label: 'Water (L/day)', data: precipData.map(v => v * areaSqm), borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
     ]
   };
 
   const downloadPDF = async () => {
     if (!containerRef.current) return;
-    const canvas = await html2canvas(containerRef.current);
-    const imgData = canvas.toDataURL('image/png');
-    const doc = new jsPDF('p','mm','letter');
-    // Header logo and title
-    doc.addImage('/roofm2_logo.png','PNG',10,10,40,15);
-    doc.setFontSize(16);
-    doc.text(`Roofm² Report for ${address}`, 55, 20);
-    doc.text(new Date().toLocaleDateString(), 55, 28);
-    doc.addImage(imgData,'PNG',10,35,190,0);
-    doc.save('roof_report.pdf');
+
+    try {
+      const canvas = await html2canvas(containerRef.current);
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF('p', 'mm', 'letter');
+      
+      // Try to add the logo from SVG file
+      try {
+        const logoResponse = await fetch('/@roofm2_logo.svg');
+        if (logoResponse.ok) {
+          const logoSvg = await logoResponse.text();
+          const logoDataUrl = `data:image/svg+xml;base64,${btoa(logoSvg)}`;
+          doc.addImage(logoDataUrl, 'SVG', 10, 10, 40, 15);
+        } else {
+          console.warn('Logo not found, continuing without it');
+        }
+      } catch (error) {
+        console.warn('Failed to add logo:', error);
+        // Continue without the logo
+      }
+      
+      // Add title and date
+      doc.setFontSize(16);
+      doc.text(`Roofm² Report for ${address}`, 55, 20);
+      doc.text(new Date().toLocaleDateString(), 55, 28);
+      
+      // Add chart image
+      doc.addImage(imgData, 'PNG', 10, 35, 190, 0);
+      doc.save('roof_report.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
@@ -91,14 +120,10 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
       <div className="mb-4">
         <Line options={areaOptions} data={areaData} />
       </div>
-      <div className="flex justify-between items-center">
-        <div>
-          <p>Total Solar: {totalSolar.toFixed(1)} W/m²·mo</p>
-          <p>Total Precip: {totalPrecip.toFixed(1)} mm·mo</p>
-          <p>Energy: {totalEnergy.toFixed(1)} W</p>
-          <p>Water: {totalWater.toFixed(1)} L</p>
-        </div>
-        <button onClick={downloadPDF} className="px-4 py-2 bg-blue-600 text-white rounded">Download PDF</button>
+      <div className="flex justify-end">
+        <button onClick={downloadPDF} className="px-4 py-2 bg-blue-600 text-white rounded">
+          Save Report
+        </button>
       </div>
     </div>
   );
