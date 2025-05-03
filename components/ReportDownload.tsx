@@ -47,6 +47,19 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Energy and Precipitation Climatologies',
+        font: {
+          size: 16,
+          weight: 'bold'
+        },
+        padding: {
+          bottom: 10
+        }
+      }
+    },
     scales: {
       y: { position: 'left', title: { display: true, text: 'Solar (W/m²/day)' } },
       y1:{ position: 'right', title: { display: true, text: 'Precip (mm/day)' }, grid:{ drawOnChartArea:false } }
@@ -62,6 +75,19 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
 
   const areaOptions: ChartOptions<'line'> = {
     responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Adjusted for Selected Roof Area',
+        font: {
+          size: 16,
+          weight: 'bold'
+        },
+        padding: {
+          bottom: 10
+        }
+      }
+    },
     scales: {
       y: { position: 'left', title: { display: true, text: 'Energy (kW/day)' } },
       y1: { position: 'right', title: { display: true, text: 'Water (L/day)' }, grid: { drawOnChartArea: false } }

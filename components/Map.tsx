@@ -57,7 +57,9 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
         options={{
           mapTypeId: google.maps.MapTypeId.SATELLITE,
           tilt: 0,
-          disableDefaultUI: true
+          // Show only essential controls
+          disableDefaultUI: true,
+          zoomControl: true
         }}
       >
         <DrawingManager

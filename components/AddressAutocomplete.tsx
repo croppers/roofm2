@@ -38,7 +38,7 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
         ref={inputRef}
         type="text"
         placeholder="Enter address"
-        className="w-full p-2 border rounded"
+        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
       />
     </Autocomplete>
   );

@@ -121,12 +121,15 @@ export default function Home() {
         
         <div className="mb-2 w-full max-w-xl">
           <div className="flex items-center justify-between">
-            <button onClick={clearPolygons} className="px-3 py-1 bg-red-500 text-white rounded">
+            <button 
+              onClick={clearPolygons} 
+              className="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+            >
               Clear Polygons
             </button>
             
             {areaSqm !== null && (
-              <div className="text-center font-semibold text-lg">
+              <div className="text-center font-semibold text-lg text-gray-700">
                 {formattedArea}
               </div>
             )}
