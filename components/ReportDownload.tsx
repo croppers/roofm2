@@ -54,12 +54,18 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     ]
   };
 
-  const areaOptions = { responsive: true, scales:{ y:{ title:{display:true,text:'Total'}} } };
+  const areaOptions: ChartOptions<'line'> = {
+    responsive: true,
+    scales: {
+      y: { position: 'left', title: { display: true, text: 'Energy (W)' } },
+      y1: { position: 'right', title: { display: true, text: 'Water (L)' }, grid: { drawOnChartArea: false } }
+    }
+  };
   const areaData = {
     labels: months,
     datasets: [
-      { label:'Energy (W·m²)', data: solarData.map(v=>v*areaSqm), borderColor:'rgba(59,130,246,0.6)' },
-      { label:'Water (L)', data: precipData.map(v=>v*areaSqm), borderColor:'rgba(16,185,129,0.6)' }
+      { label: 'Energy (W)', data: solarData.map(v => v * areaSqm), borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
+      { label: 'Water (L)', data: precipData.map(v => v * areaSqm), borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
     ]
   };
 
