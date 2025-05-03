@@ -129,25 +129,6 @@ This project is a full-stack web application to help users estimate the square f
 - Decide on styling approach (Tailwind CSS, plain CSS, etc.).
 - Confirm if any additional features are required.
 
-## Task #8: Final QA and Deployment
-
-1. Final QA Checklist:
-   - Verify address autocomplete works for various addresses and scenarios.
-   - Test polygon drawing for accuracy and area calculation with complex shapes.
-   - Validate unit toggle between metric and imperial.
-   - Confirm climatological data fetch succeeds and month values map correctly.
-   - Ensure chart rendering and PDF generation function across major browsers and devices.
-
-2. Deployment Steps:
-   - Push commits to `main` and confirm GitHub integration with Vercel.
-   - Add necessary environment variables on Vercel (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, CLIMATE_API_URL, etc.).
-   - Deploy the `main` branch to production and verify the live site.
-
-3. Post-Deployment Monitoring:
-   - Monitor application logs for errors.
-   - Perform smoke tests on the production environment.
-   - Gather initial user feedback and address critical issues.
-
 ---
 
 This file is intended for the Cursor CI environment to automate scaffolding, testing, and deployment. Follow each step in sequence to get the project up and running quickly.

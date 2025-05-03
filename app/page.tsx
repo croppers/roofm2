@@ -5,7 +5,7 @@ import Map from '../components/Map';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import UnitToggle from '../components/UnitToggle';
 import ReportDownload from '../components/ReportDownload';
-import { calculateAreaSqMeters } from '../utils/area';
+import { calculateAreaSqMeters, getPolygonCentroid } from '../utils/area';
 import { roundDecimal } from '../utils/unitConversion';
 
 export default function Home() {
@@ -37,9 +37,12 @@ export default function Home() {
     const sqm = calculateAreaSqMeters(coords);
     setAreaSqm(roundDecimal(sqm));
     
+    // Calculate centroid for API call
+    const centerCoord = getPolygonCentroid(coords);
+    
     // Fetch climatology
     try {
-      const res = await fetch(`/api/climate?lat=${coords[0].lat}&lng=${coords[0].lng}`);
+      const res = await fetch(`/api/climate?lat=${centerCoord.lat}&lng=${centerCoord.lng}`);
       const data = await res.json();
       setMonthlySolar(data.solar || {});
       setMonthlyPrecip(data.precipitation || {});
