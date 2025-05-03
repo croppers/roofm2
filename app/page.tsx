@@ -1,4 +1,8 @@
 'use client';
+
+// Force dynamic rendering (no static export) to support client hooks like useSearchParams
+export const dynamic = 'force-dynamic';
+
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
