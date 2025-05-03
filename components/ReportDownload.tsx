@@ -1,6 +1,5 @@
 'use client';
 import { useRef } from 'react';
-import Image from 'next/image';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -40,10 +39,6 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const totalEnergyKW = (totalSolar * areaSqm) / 1000;
   const totalWater = totalPrecip * areaSqm; // mm * m² = liters
   
-  // Calculate daily averages (divide by 365 for annual average per day)
-  const dailyEnergyKW = totalEnergyKW / 365;
-  const dailyWaterL = totalWater / 365;
-
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,

@@ -47,8 +47,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("Mapped Precip:", monthlyPrecip);
 
     return res.status(200).json({ solar: monthlySolar, precipitation: monthlyPrecip });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
-    return res.status(500).json({ error: err.message || 'Server error' });
+    const message = err instanceof Error ? err.message : 'Server error';
+    return res.status(500).json({ error: message });
   }
 } 
