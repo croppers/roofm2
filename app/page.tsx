@@ -1,6 +1,12 @@
+'use client';
 import Image from "next/image";
+import { useState } from 'react';
+import Map from '../components/Map';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 export default function Home() {
+  const [center, setCenter] = useState<google.maps.LatLngLiteral>({ lat: 37.7749, lng: -122.4194 });
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -50,6 +56,12 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+
+        <h1 className="text-2xl font-semibold mb-4">Roofm² Estimator</h1>
+        <div className="w-full max-w-xl mb-4">
+          <AddressAutocomplete onPlaceSelected={coords => setCenter(coords)} />
+        </div>
+        <Map center={center} />
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
