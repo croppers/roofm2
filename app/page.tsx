@@ -3,9 +3,61 @@ import Image from "next/image";
 import { useState } from 'react';
 import Map from '../components/Map';
 import AddressAutocomplete from '../components/AddressAutocomplete';
+import UnitToggle from '../components/UnitToggle';
+import ReportDownload from '../components/ReportDownload';
+import { calculateAreaSqMeters } from '../utils/area';
+import { roundDecimal } from '../utils/unitConversion';
 
 export default function Home() {
+  // Map center and selected address
   const [center, setCenter] = useState<google.maps.LatLngLiteral>({ lat: 37.7749, lng: -122.4194 });
+  const [address, setAddress] = useState<string>('');
+  
+  // Polygons and area
+  const [polygons, setPolygons] = useState<google.maps.Polygon[]>([]);
+  const [areaSqm, setAreaSqm] = useState<number | null>(null);
+  
+  // Climatology data
+  const [monthlySolar, setMonthlySolar] = useState<Record<string, number>>({});
+  const [monthlyPrecip, setMonthlyPrecip] = useState<Record<string, number>>({});
+  
+  // Handle address selection
+  const handlePlaceSelected = (coords: { lat: number; lng: number }, addr: string) => {
+    setCenter(coords);
+    setAddress(addr);
+  };
+  
+  // Handle polygon drawing complete
+  const handlePolygonComplete = async (polygon: google.maps.Polygon, coords: google.maps.LatLngLiteral[]) => {
+    // Clear previous data
+    polygons.forEach(p => p.setMap(null));
+    setPolygons([polygon]);
+    
+    // Calculate area
+    const sqm = calculateAreaSqMeters(coords);
+    setAreaSqm(roundDecimal(sqm));
+    
+    // Fetch climatology
+    try {
+      const res = await fetch(`/api/climate?lat=${coords[0].lat}&lng=${coords[0].lng}`);
+      const data = await res.json();
+      setMonthlySolar(data.solar || {});
+      setMonthlyPrecip(data.precipitation || {});
+    } catch (e) {
+      console.error('Climatology fetch error', e);
+      setMonthlySolar({});
+      setMonthlyPrecip({});
+    }
+  };
+  
+  // Clear polygons
+  const clearPolygons = () => {
+    polygons.forEach(p => p.setMap(null));
+    setPolygons([]);
+    setAreaSqm(null);
+    setMonthlySolar({});
+    setMonthlyPrecip({});
+  };
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -59,9 +111,27 @@ export default function Home() {
 
         <h1 className="text-2xl font-semibold mb-4">Roofm² Estimator</h1>
         <div className="w-full max-w-xl mb-4">
-          <AddressAutocomplete onPlaceSelected={coords => setCenter(coords)} />
+          <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
         </div>
-        <Map center={center} />
+        <div className="mb-2 flex justify-between items-center w-full max-w-xl">
+          <button onClick={clearPolygons} className="px-3 py-1 bg-red-500 text-white rounded">
+            Clear Polygons
+          </button>
+          {areaSqm != null && <UnitToggle />}
+        </div>
+        <div className="w-full max-w-xl mb-4">
+          <Map center={center} onPolygonComplete={handlePolygonComplete} />
+        </div>
+        {areaSqm != null && monthlySolar && monthlyPrecip && (
+          <div className="w-full max-w-xl">
+            <ReportDownload
+              address={address}
+              areaSqm={areaSqm}
+              monthlySolar={monthlySolar}
+              monthlyPrecip={monthlyPrecip}
+            />
+          </div>
+        )}
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a

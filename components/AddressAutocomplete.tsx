@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 
 interface AddressAutocompleteProps {
-  onPlaceSelected: (coords: { lat: number; lng: number }) => void;
+  onPlaceSelected: (coords: { lat: number; lng: number }, address: string) => void;
 }
 
 export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocompleteProps) {
@@ -24,7 +24,8 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
     if (place?.geometry?.location) {
       const lat = place.geometry.location.lat();
       const lng = place.geometry.location.lng();
-      onPlaceSelected({ lat, lng });
+      const formatted = place.formatted_address || '';
+      onPlaceSelected({ lat, lng }, formatted);
     }
   };
 
