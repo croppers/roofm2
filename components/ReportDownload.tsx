@@ -31,10 +31,6 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
   const precipData = months.map((_,i) => monthlyPrecip[String(i+1)] ?? 0);
 
-  // Annual totals
-  const totalSolar = solarData.reduce((sum,v) => sum+v, 0);
-  const totalPrecip = precipData.reduce((sum,v) => sum+v, 0);
-  
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,
