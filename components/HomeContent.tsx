@@ -122,29 +122,40 @@ export default function HomeContent() {
             className="h-12 sm:h-20 max-w-full"
           />
         </div>
-        {/* Address Input */}
-        <div className="w-3/4 mx-auto mb-8">
-          <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
-        </div>
-        {/* Controls Row */}
-        <div className="flex flex-col items-center sm:flex-row sm:justify-center sm:items-center gap-2 w-full mb-8">
-          <button
-            onClick={clearPolygons}
-            className="w-3/4 mx-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
-          >
-            Clear Polygons
-          </button>
+        {/* Grouped Address, Controls, and Map with uniform spacing */}
+        <div className="w-full space-y-[3rem]">
+          {/* Address Input */}
+          <div className="w-3/4 mx-auto">
+            <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
+          </div>
+          {/* Controls Row - show only after polygon drawn */}
           {areaSqm !== null && (
-            <div className="text-center font-semibold text-base sm:text-lg text-gray-700 py-2">
-              {formattedArea}
+            <div className="w-3/4 mx-auto">
+              <div className="grid grid-cols-3 items-center">
+                {/* Clear Polygons button on left */}
+                <div className="flex justify-start">
+                  <button
+                    onClick={clearPolygons}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+                  >
+                    Clear Polygons
+                  </button>
+                </div>
+                {/* Area text centered */}
+                <div className="text-center font-semibold text-base sm:text-lg text-gray-700">
+                  {formattedArea}
+                </div>
+                {/* Unit toggle on right */}
+                <div className="flex justify-end">
+                  <UnitToggle />
+                </div>
+              </div>
             </div>
           )}
-          {areaSqm !== null && <UnitToggle />}
-        </div>
-        
-        {/* Map Container - Back in normal flow */}
-        <div ref={mapContainerRef} className="w-3/4 mx-auto mb-4" style={{ aspectRatio: '1/1' }}>
-          <Map center={center} onPolygonComplete={handlePolygonComplete} />
+          {/* Map Container */}
+          <div ref={mapContainerRef} className="w-3/4 mx-auto" style={{ aspectRatio: '1/1' }}>
+            <Map center={center} onPolygonComplete={handlePolygonComplete} />
+          </div>
         </div>
 
         {/* Loading - Back in normal flow */}
@@ -154,9 +165,9 @@ export default function HomeContent() {
           </div>
         )}
 
-        {/* Report - Back in normal flow */}
+        {/* Report - add spacing above charts */}
         {!isLoading && hasData && (
-          <div className="w-full mt-0">
+          <div className="w-full mt-[3rem]">
             <ReportDownload
               address={address}
               areaSqm={areaSqm}

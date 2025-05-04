@@ -1,5 +1,5 @@
 'use client';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -32,10 +32,19 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const searchParams = useSearchParams();
   const units = searchParams?.get('units') === 'imperial' ? 'imperial' : 'metric';
 
+  // State for sliders
+  const [waterEfficiency, setWaterEfficiency] = useState(0.8); // Default 80%
+  const [panelEfficiency, setPanelEfficiency] = useState(0.2); // Default 20%
+  const [roofCoverage, setRoofCoverage] = useState(0.6); // Default 60%
+
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
   const precipData = months.map((_,i) => monthlyPrecip[String(i+1)] ?? 0);
   
+  // Convert solar radiation from MJ/m²/day to kWh/m²/day (1 kWh = 3.6 MJ)
+  const MJ_TO_KWH = 1 / 3.6;
+  const solarDataKwh = solarData.map(v => v * MJ_TO_KWH);
+
   // Convert precipitation data if using imperial units
   const displayPrecipData = units === 'imperial' 
     ? precipData.map(value => value * 0.0393701) // mm to inches
@@ -43,6 +52,18 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     
   const precipUnitText = units === 'imperial' ? 'Precip (inches/day)' : 'Precip (mm/day)';
   const waterUnitText = units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)';
+
+  // Days in each month for monthly climatologies
+  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  // Convert daily values to monthly
+  const solarDataMonthlyKwh = solarDataKwh.map((v, i) => v * daysInMonth[i]);
+  const precipMonthlyRaw = precipData.map((v, i) => v * daysInMonth[i]); // mm/month
+  // Convert precipitation to units per month
+  const displayPrecipMonthly = units === 'imperial'
+    ? precipMonthlyRaw.map(v => v * 0.0393701) // inches/month
+    : precipMonthlyRaw.map(v => v * 0.1);      // cm/month
+  // Unit label for precipitation
+  const precipMonthlyUnitText = units === 'imperial' ? 'Precip (inches/month)' : 'Precip (cm/month)';
 
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
@@ -74,7 +95,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         position: 'left', 
         title: { 
           display: true, 
-          text: 'Solar (W/m²/day)',
+          text: 'Solar (kWh/m²/month)',
           font: {
             size: 11
           }
@@ -84,7 +105,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         position: 'right', 
         title: { 
           display: true, 
-          text: precipUnitText,
+          text: precipMonthlyUnitText,
           font: {
             size: 11
           }
@@ -99,15 +120,20 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const combinedData = {
     labels: months,
     datasets: [
-      { label: 'Solar', data: solarData, borderColor: 'rgba(59,130,246,1)', yAxisID:'y' },
-      { label: 'Precip', data: displayPrecipData, borderColor: 'rgba(16,185,129,1)', yAxisID:'y1' }
+      { label: 'Solar', data: solarDataMonthlyKwh, borderColor: 'rgba(59,130,246,1)', yAxisID:'y' },
+      { label: 'Precip', data: displayPrecipMonthly, borderColor: 'rgba(16,185,129,1)', yAxisID:'y1' }
     ]
   };
 
-  // Calculate water collection values based on area
-  const waterCollectionData = units === 'imperial'
-    ? precipData.map(v => v * areaSqm * 0.264172) // L to gallons
-    : precipData.map(v => v * areaSqm); // L/day
+  // Calculate water collection values based on area and initial conversion factor
+  const baseWaterCollectionData = units === 'imperial'
+    ? precipData.map(v => (v * areaSqm * 0.264172) * 0.62) // L to gallons, * 0.62
+    : precipData.map(v => (v * areaSqm) * 0.62); // L/day, * 0.62
+
+  // Compute energy capture: MJ/m²/day * area => MJ/day, convert to kWh, apply efficiencies, then to kWh/month
+  const energyDataKwhPerDay = solarData.map(v => v * MJ_TO_KWH * areaSqm * panelEfficiency * roofCoverage);
+  const energyDataAdjusted = energyDataKwhPerDay.map((val, i) => val * daysInMonth[i]);
+  const waterDataAdjusted = baseWaterCollectionData.map(v => v * waterEfficiency); // Apply efficiency slider
 
   const areaOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -115,7 +141,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     plugins: {
       title: {
         display: true,
-        text: 'Adjusted for Selected Roof Area',
+        text: 'Potential Capture above Roof',
         font: {
           size: 14,
           weight: 'bold'
@@ -138,7 +164,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         position: 'left', 
         title: { 
           display: true, 
-          text: 'Energy (kW/day)',
+          text: 'Energy (kWh/month)',
           font: {
             size: 11
           }
@@ -163,10 +189,15 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const areaData = {
     labels: months,
     datasets: [
-      { label: 'Energy (kW/day)', data: solarData.map(v => (v * areaSqm) / 1000), borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
-      { label: units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)', data: waterCollectionData, borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
+      { label: 'Energy (kWh/month)', data: energyDataAdjusted, borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
+      { label: units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)', data: waterDataAdjusted, borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
     ]
   };
+
+  // Prepare formatted area string for PDF
+  const formattedAreaText = units === 'imperial'
+    ? `${(areaSqm * 10.7639).toLocaleString(undefined, { maximumFractionDigits: 1 })} ft²`
+    : `${areaSqm.toLocaleString(undefined, { maximumFractionDigits: 1 })} m²`;
 
   const downloadPDF = async () => {
     if (!chartsRef.current) return;
@@ -230,6 +261,15 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
           const mapY = currentY + 5; // Position with padding
           doc.addImage(mapImageDataUrl, 'PNG', mapX, mapY, finalMapWidth, imgHeight);
           currentY = mapY + imgHeight; // Update Y position
+
+          // Add computed area and slider settings
+          doc.setFontSize(12);
+          doc.text(`Roof Area: ${formattedAreaText}`, 10, currentY + 5);
+          doc.text(`Water Efficiency: ${(waterEfficiency * 100).toFixed(0)}%`, 10, currentY + 12);
+          doc.text(`Panel Efficiency: ${(panelEfficiency * 100).toFixed(0)}%`, 10, currentY + 19);
+          doc.text(`Coverage: ${(roofCoverage * 100).toFixed(0)}%`, 10, currentY + 26);
+          currentY += 30;
+
         } catch (e) {
           console.error("Error adding map image to PDF:", e);
         }
@@ -294,18 +334,86 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
 
   return (
     <div ref={containerRef} className="p-0 bg-white rounded shadow w-full overflow-hidden">
-      <div ref={chartsRef} className="charts-container">
-        <div className="mb-0 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
+      <div ref={chartsRef} className="charts-container space-y-[3rem]">
+        <div className="mb-8 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
           <Line options={combinedOptions} data={combinedData} />
         </div>
-        <div className="mb-0 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
+        <div className="mb-0 mt-8 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
           <Line options={areaOptions} data={areaData} />
         </div>
       </div>
-      <div className="flex justify-center pt-0">
-        <button onClick={downloadPDF} className="w-3/4 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
-          Save Report
-        </button>
+      {/* Group sliders and button with uniform spacing */}
+      <div className="space-y-[3rem] mt-[3rem]">
+        <div className="w-1/2 mx-auto space-y-6">
+          {/* Water Efficiency Slider */}
+          <div className="py-2">
+            <label htmlFor="waterEfficiency" className="block text-sm font-medium text-gray-700 mb-3 text-center">
+              Water Collection Efficiency: {(waterEfficiency * 100).toFixed(0)}%
+            </label>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">75%</span>
+              <input
+                id="waterEfficiency"
+                type="range"
+                min="0.75"
+                max="0.9"
+                step="0.01"
+                value={waterEfficiency}
+                onChange={(e) => setWaterEfficiency(parseFloat(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+              />
+              <span className="text-xs text-gray-500">90%</span>
+            </div>
+          </div>
+          {/* Panel Efficiency Slider */}
+          <div className="py-2">
+            <label htmlFor="panelEfficiency" className="block text-sm font-medium text-gray-700 mb-3 text-center">
+              Solar Panel Efficiency: {(panelEfficiency * 100).toFixed(0)}%
+            </label>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">15%</span>
+              <input
+                id="panelEfficiency"
+                type="range"
+                min="0.15"
+                max="0.25"
+                step="0.01"
+                value={panelEfficiency}
+                onChange={(e) => setPanelEfficiency(parseFloat(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <span className="text-xs text-gray-500">25%</span>
+            </div>
+          </div>
+          {/* Roof Coverage Slider */}
+          <div className="py-2">
+            <label htmlFor="roofCoverage" className="block text-sm font-medium text-gray-700 mb-3 text-center">
+              Roof Coverage by Panels: {(roofCoverage * 100).toFixed(0)}%
+            </label>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">40%</span>
+              <input
+                id="roofCoverage"
+                type="range"
+                min="0.4"
+                max="0.8"
+                step="0.01"
+                value={roofCoverage}
+                onChange={(e) => setRoofCoverage(parseFloat(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-500"
+              />
+              <span className="text-xs text-gray-500">80%</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <button
+            onClick={downloadPDF}
+            className="w-3/4 mx-auto px-4 py-3 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+          >
+            Save Report
+          </button>
+        </div>
       </div>
     </div>
   );
