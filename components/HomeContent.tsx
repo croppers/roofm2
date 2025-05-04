@@ -87,8 +87,8 @@ export default function HomeContent() {
                   Object.keys(monthlyPrecip).length > 0;
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen px-4 sm:px-8 py-6 sm:p-8 md:p-20 gap-8 sm:gap-16 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-6 sm:gap-[32px] row-start-2 items-center sm:items-start">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen w-full max-w-full px-[10%] sm:px-8 py-6 sm:p-8 md:p-20 gap-8 sm:gap-16 font-[family-name:var(--font-geist-sans)] overflow-x-hidden">
+      <main className="flex flex-col gap-6 sm:gap-[32px] row-start-2 items-center sm:items-start w-full">
         <div className="w-full max-w-xl flex justify-center">
           <Image 
             src="/@roofm2_logo.svg" 
@@ -96,7 +96,7 @@ export default function HomeContent() {
             width={576}
             height={174}
             priority
-            className="mb-2 sm:mb-4 h-12 sm:h-20"
+            className="mb-2 sm:mb-4 h-12 sm:h-20 max-w-full"
           />
         </div>
         <div className="w-full max-w-xl mb-2 sm:mb-4">

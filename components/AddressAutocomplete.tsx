@@ -29,8 +29,8 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
     }
   };
 
-  if (loadError) return <div>Error loading Places</div>;
-  if (!isLoaded) return <div>Loading autocomplete...</div>;
+  if (loadError) return <div className="text-center p-3 bg-red-100 text-red-700 rounded">Error loading Places</div>;
+  if (!isLoaded) return <div className="text-center p-3">Loading autocomplete...</div>;
 
   return (
     <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
@@ -38,7 +38,7 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
         ref={inputRef}
         type="text"
         placeholder="Enter address"
-        className="w-full px-4 py-2 text-base sm:text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+        className="w-full max-w-full px-3 py-2 text-base sm:text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
       />
     </Autocomplete>
   );

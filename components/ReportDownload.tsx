@@ -34,6 +34,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       title: {
         display: true,
@@ -45,13 +46,43 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         padding: {
           bottom: 10
         }
+      },
+      legend: {
+        labels: {
+          boxWidth: 10,
+          font: {
+            size: 11
+          }
+        }
       }
     },
     scales: {
-      y: { position: 'left', title: { display: true, text: 'Solar (W/m²/day)' } },
-      y1:{ position: 'right', title: { display: true, text: 'Precip (mm/day)' }, grid:{ drawOnChartArea:false } }
+      y: { 
+        position: 'left', 
+        title: { 
+          display: true, 
+          text: 'Solar (W/m²/day)',
+          font: {
+            size: 11
+          }
+        } 
+      },
+      y1:{ 
+        position: 'right', 
+        title: { 
+          display: true, 
+          text: 'Precip (mm/day)',
+          font: {
+            size: 11
+          }
+        }, 
+        grid:{ 
+          drawOnChartArea: false 
+        } 
+      }
     }
   };
+  
   const combinedData = {
     labels: months,
     datasets: [
@@ -62,6 +93,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
 
   const areaOptions: ChartOptions<'line'> = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       title: {
         display: true,
@@ -73,13 +105,43 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         padding: {
           bottom: 10
         }
+      },
+      legend: {
+        labels: {
+          boxWidth: 10,
+          font: {
+            size: 11
+          }
+        }
       }
     },
     scales: {
-      y: { position: 'left', title: { display: true, text: 'Energy (kW/day)' } },
-      y1: { position: 'right', title: { display: true, text: 'Water (L/day)' }, grid: { drawOnChartArea: false } }
+      y: { 
+        position: 'left', 
+        title: { 
+          display: true, 
+          text: 'Energy (kW/day)',
+          font: {
+            size: 11
+          }
+        } 
+      },
+      y1: { 
+        position: 'right', 
+        title: { 
+          display: true, 
+          text: 'Water (L/day)',
+          font: {
+            size: 11
+          }
+        }, 
+        grid: { 
+          drawOnChartArea: false 
+        } 
+      }
     }
   };
+  
   const areaData = {
     labels: months,
     datasets: [
@@ -126,14 +188,14 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   };
 
   return (
-    <div ref={containerRef} className="p-3 sm:p-4 bg-white rounded shadow">
-      <div className="mb-4 w-full h-64 sm:h-80 md:h-96">
+    <div ref={containerRef} className="p-3 sm:p-4 bg-white rounded shadow w-full max-w-full overflow-hidden">
+      <div className="mb-4 w-full h-64 sm:h-80 md:h-96 overflow-hidden">
         <Line options={combinedOptions} data={combinedData} />
       </div>
-      <div className="mb-4 w-full h-64 sm:h-80 md:h-96">
+      <div className="mb-4 w-full h-64 sm:h-80 md:h-96 overflow-hidden">
         <Line options={areaOptions} data={areaData} />
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-center sm:justify-end">
         <button onClick={downloadPDF} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
           Save Report
         </button>

@@ -8,7 +8,9 @@ const containerStyle = {
   width: '100%',
   height: 0, // Will be set dynamically based on width
   paddingBottom: '100%', // This creates a 1:1 aspect ratio (square)
-  position: 'relative' as const // TypeScript needs this type assertion
+  position: 'relative' as const, // TypeScript needs this type assertion
+  maxWidth: '100%',
+  overflow: 'hidden'
 };
 
 const mapStyle = {
@@ -49,7 +51,7 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
   };
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} className="rounded-lg overflow-hidden shadow-md">
       <GoogleMap
         mapContainerStyle={mapStyle}
         center={center}
