@@ -225,7 +225,6 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
       const chartImg = new Image();
       chartImg.src = chartImgData;
       await chartImg.decode();
-      const chartImgWidth = usableWidth;
       let finalChartWidth = usableWidth;
       let chartImgHeight = (chartImg.height * finalChartWidth) / chartImg.width;
       const remainingHeightForCharts = pageHeight - currentY - 10; // Remaining space
