@@ -17,7 +17,7 @@ export default function UnitToggle() {
   return (
     <button 
       onClick={toggleUnits} 
-      className="w-1/2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+      className="w-3/4 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
     >
       {units === 'metric' ? 'Show ft²' : 'Show m²'}
     </button>

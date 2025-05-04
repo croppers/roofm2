@@ -101,14 +101,14 @@ export default function HomeContent() {
           />
         </div>
         {/* Address Input */}
-        <div className="w-1/2 mx-auto mb-8">
+        <div className="w-3/4 mx-auto mb-8">
           <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
         </div>
         {/* Controls Row */}
         <div className="flex flex-col items-center sm:flex-row sm:justify-center sm:items-center gap-2 w-full mb-8">
           <button
             onClick={clearPolygons}
-            className="w-1/2 mx-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+            className="w-3/4 mx-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
           >
             Clear Polygons
           </button>
@@ -123,7 +123,7 @@ export default function HomeContent() {
         {/* Map and Data Container with relative positioning */}
         <div className="w-full flex items-center justify-center" style={{ position: 'relative' }}>
           {/* Map Container */}
-          <div className="w-1/2" style={{ aspectRatio: '1/1' }}>
+          <div className="w-3/4" style={{ aspectRatio: '1/1' }}>
             <Map center={center} onPolygonComplete={handlePolygonComplete} />
           </div>
           

@@ -191,15 +191,15 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   return (
     <div ref={containerRef} className="p-0 bg-white rounded shadow w-full overflow-hidden">
       <div ref={chartsRef} className="charts-container">
-        <div className="mb-0 w-1/2 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
+        <div className="mb-0 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
           <Line options={combinedOptions} data={combinedData} />
         </div>
-        <div className="mb-0 w-1/2 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
+        <div className="mb-0 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
           <Line options={areaOptions} data={areaData} />
         </div>
       </div>
       <div className="flex justify-center pt-0">
-        <button onClick={downloadPDF} className="w-1/2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
+        <button onClick={downloadPDF} className="w-3/4 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
           Save Report
         </button>
       </div>
