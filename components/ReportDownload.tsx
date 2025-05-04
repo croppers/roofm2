@@ -1,5 +1,5 @@
 'use client';
-import { useRef } from 'react';
+import { useRef, createRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -26,6 +26,7 @@ interface ReportDownloadProps {
 
 export default function ReportDownload({ address, areaSqm, monthlySolar, monthlyPrecip }: ReportDownloadProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
@@ -151,10 +152,10 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   };
 
   const downloadPDF = async () => {
-    if (!containerRef.current) return;
+    if (!chartsRef.current) return;
 
     try {
-      const canvas = await html2canvas(containerRef.current);
+      const canvas = await html2canvas(chartsRef.current);
       const imgData = canvas.toDataURL('image/png');
       const doc = new jsPDF('p', 'mm', 'letter');
       
@@ -188,15 +189,17 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   };
 
   return (
-    <div ref={containerRef} className="p-3 sm:p-4 bg-white rounded shadow w-full max-w-full overflow-hidden">
-      <div className="mb-4 w-full h-64 sm:h-80 md:h-96 overflow-hidden">
-        <Line options={combinedOptions} data={combinedData} />
+    <div ref={containerRef} className="p-0 bg-white rounded shadow w-full overflow-hidden">
+      <div ref={chartsRef} className="charts-container">
+        <div className="mb-0 w-1/2 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
+          <Line options={combinedOptions} data={combinedData} />
+        </div>
+        <div className="mb-0 w-1/2 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden">
+          <Line options={areaOptions} data={areaData} />
+        </div>
       </div>
-      <div className="mb-4 w-full h-64 sm:h-80 md:h-96 overflow-hidden">
-        <Line options={areaOptions} data={areaData} />
-      </div>
-      <div className="flex justify-center sm:justify-end">
-        <button onClick={downloadPDF} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
+      <div className="flex justify-center pt-0">
+        <button onClick={downloadPDF} className="w-1/2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium">
           Save Report
         </button>
       </div>

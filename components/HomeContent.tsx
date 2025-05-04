@@ -87,57 +87,67 @@ export default function HomeContent() {
                   Object.keys(monthlyPrecip).length > 0;
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen w-full max-w-full px-[10%] sm:px-8 py-6 sm:p-8 md:p-20 gap-8 sm:gap-16 font-[family-name:var(--font-geist-sans)] overflow-x-hidden">
-      <main className="flex flex-col gap-6 sm:gap-[32px] row-start-2 items-center sm:items-start w-full">
-        <div className="w-full max-w-xl flex justify-center">
-          <Image 
-            src="/@roofm2_logo.svg" 
-            alt="Roofm² Logo" 
+    <div className="min-h-screen container mx-auto px-4 sm:px-6 md:px-8 py-6 overflow-x-hidden font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-col items-center sm:items-start w-full">
+        {/* Logo */}
+        <div className="w-full flex justify-center mb-8">
+          <Image
+            src="/@roofm2_logo.svg"
+            alt="Roofm² Logo"
             width={576}
             height={174}
             priority
-            className="mb-2 sm:mb-4 h-12 sm:h-20 max-w-full"
+            className="h-12 sm:h-20 max-w-full"
           />
         </div>
-        <div className="w-full max-w-xl mb-2 sm:mb-4">
+        {/* Address Input */}
+        <div className="w-1/2 mx-auto mb-8">
           <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
         </div>
-        <div className="mb-2 w-full max-w-xl">
-          <div className="flex flex-col gap-2 sm:flex-row sm:gap-0 sm:items-center sm:justify-between">
-            <button 
-              onClick={clearPolygons} 
-              className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
-            >
-              Clear Polygons
-            </button>
-            {areaSqm !== null && (
-              <div className="text-center font-semibold text-base sm:text-lg text-gray-700 py-2">
-                {formattedArea}
+        {/* Controls Row */}
+        <div className="flex flex-col items-center sm:flex-row sm:justify-center sm:items-center gap-2 w-full mb-8">
+          <button
+            onClick={clearPolygons}
+            className="w-1/2 mx-auto px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out text-sm font-medium"
+          >
+            Clear Polygons
+          </button>
+          {areaSqm !== null && (
+            <div className="text-center font-semibold text-base sm:text-lg text-gray-700 py-2">
+              {formattedArea}
+            </div>
+          )}
+          {areaSqm !== null && <UnitToggle />}
+        </div>
+        
+        {/* Map and Data Container with relative positioning */}
+        <div className="w-full flex items-center justify-center" style={{ position: 'relative' }}>
+          {/* Map Container */}
+          <div className="w-1/2" style={{ aspectRatio: '1/1' }}>
+            <Map center={center} onPolygonComplete={handlePolygonComplete} />
+          </div>
+          
+          {/* Data Container - Absolutely positioned */}
+          <div style={{ position: 'absolute', top: '100%', width: '100%', marginTop: '20px' }}>
+            {/* Loading */}
+            {isLoading && areaSqm != null && (
+              <div className="w-full text-center">
+                <p className="text-lg sm:text-xl">Loading...</p>
               </div>
             )}
-            {areaSqm !== null && <UnitToggle />}
+            
+            {/* Report */}
+            {!isLoading && hasData && (
+              <ReportDownload
+                address={address}
+                areaSqm={areaSqm}
+                monthlySolar={monthlySolar}
+                monthlyPrecip={monthlyPrecip}
+              />
+            )}
           </div>
         </div>
-        <div className="w-full max-w-xl mb-4">
-          <Map center={center} onPolygonComplete={handlePolygonComplete} />
-        </div>
-        {isLoading && areaSqm != null && (
-          <div className="w-full max-w-xl text-center py-4 sm:py-8">
-            <p className="text-lg sm:text-xl">Loading...</p>
-          </div>
-        )}
-        {!isLoading && hasData && (
-          <div className="w-full max-w-xl">
-            <ReportDownload
-              address={address}
-              areaSqm={areaSqm}
-              monthlySolar={monthlySolar}
-              monthlyPrecip={monthlyPrecip}
-            />
-          </div>
-        )}
       </main>
-      <footer>{/* Empty footer, or add your own content */}</footer>
     </div>
   );
 } 
