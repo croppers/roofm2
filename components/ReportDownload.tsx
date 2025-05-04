@@ -14,6 +14,7 @@ import {
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { ChartOptions } from 'chart.js';
+import { useSearchParams } from 'next/navigation';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -28,10 +29,20 @@ interface ReportDownloadProps {
 export default function ReportDownload({ address, areaSqm, monthlySolar, monthlyPrecip, mapImageDataUrl }: ReportDownloadProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartsRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const units = searchParams?.get('units') === 'imperial' ? 'imperial' : 'metric';
 
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
   const precipData = months.map((_,i) => monthlyPrecip[String(i+1)] ?? 0);
+  
+  // Convert precipitation data if using imperial units
+  const displayPrecipData = units === 'imperial' 
+    ? precipData.map(value => value * 0.0393701) // mm to inches
+    : precipData;
+    
+  const precipUnitText = units === 'imperial' ? 'Precip (inches/day)' : 'Precip (mm/day)';
+  const waterUnitText = units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)';
 
   // Combined chart options with twin axes (linear scales are default)
   const combinedOptions: ChartOptions<'line'> = {
@@ -73,7 +84,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         position: 'right', 
         title: { 
           display: true, 
-          text: 'Precip (mm/day)',
+          text: precipUnitText,
           font: {
             size: 11
           }
@@ -89,9 +100,14 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     labels: months,
     datasets: [
       { label: 'Solar', data: solarData, borderColor: 'rgba(59,130,246,1)', yAxisID:'y' },
-      { label: 'Precip', data: precipData, borderColor: 'rgba(16,185,129,1)', yAxisID:'y1' }
+      { label: 'Precip', data: displayPrecipData, borderColor: 'rgba(16,185,129,1)', yAxisID:'y1' }
     ]
   };
+
+  // Calculate water collection values based on area
+  const waterCollectionData = units === 'imperial'
+    ? precipData.map(v => v * areaSqm * 0.264172) // L to gallons
+    : precipData.map(v => v * areaSqm); // L/day
 
   const areaOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -132,7 +148,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         position: 'right', 
         title: { 
           display: true, 
-          text: 'Water (L/day)',
+          text: waterUnitText,
           font: {
             size: 11
           }
@@ -148,7 +164,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     labels: months,
     datasets: [
       { label: 'Energy (kW/day)', data: solarData.map(v => (v * areaSqm) / 1000), borderColor: 'rgba(59,130,246,0.6)', yAxisID: 'y' },
-      { label: 'Water (L/day)', data: precipData.map(v => v * areaSqm), borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
+      { label: units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)', data: waterCollectionData, borderColor: 'rgba(16,185,129,0.6)', yAxisID: 'y1' }
     ]
   };
 
