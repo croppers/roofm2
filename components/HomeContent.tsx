@@ -1,6 +1,6 @@
 'use client';
 import Image from "next/image";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Map from './Map';
 import AddressAutocomplete from './AddressAutocomplete';
@@ -8,6 +8,7 @@ import UnitToggle from './UnitToggle';
 import ReportDownload from './ReportDownload';
 import { calculateAreaSqMeters, getPolygonCentroid } from '../utils/area';
 import { roundDecimal } from '../utils/unitConversion';
+import html2canvas from 'html2canvas';
 
 export default function HomeContent() {
   // Map center and selected address
@@ -31,6 +32,9 @@ export default function HomeContent() {
   
   // Loading state
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [mapImageDataUrl, setMapImageDataUrl] = useState<string | null>(null);
+  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   
   // Format the area display based on selected units
   useEffect(() => {
@@ -58,7 +62,24 @@ export default function HomeContent() {
     const sqm = calculateAreaSqMeters(coords);
     setAreaSqm(roundDecimal(sqm));
     setIsLoading(true);
+    setMapImageDataUrl(null);
     const centerCoord = getPolygonCentroid(coords);
+    
+    setTimeout(async () => {
+      if (mapContainerRef.current) {
+        try {
+          const canvas = await html2canvas(mapContainerRef.current, {
+            useCORS: true,
+            allowTaint: true,
+          });
+          setMapImageDataUrl(canvas.toDataURL('image/png'));
+        } catch (e) {
+          console.error("Error capturing map image:", e);
+          setMapImageDataUrl(null);
+        }
+      }
+    }, 500);
+
     try {
       const res = await fetch(`/api/climate?lat=${centerCoord.lat}&lng=${centerCoord.lng}`);
       const data = await res.json();
@@ -77,6 +98,7 @@ export default function HomeContent() {
     polygons.forEach(p => p.setMap(null));
     setPolygons([]);
     setAreaSqm(null);
+    setMapImageDataUrl(null);
     setMonthlySolar({});
     setMonthlyPrecip({});
     setIsLoading(false);
@@ -87,8 +109,8 @@ export default function HomeContent() {
                   Object.keys(monthlyPrecip).length > 0;
 
   return (
-    <div className="min-h-screen container mx-auto px-4 sm:px-6 md:px-8 py-6 overflow-x-hidden font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col items-center sm:items-start w-full">
+    <div className="flex flex-col min-h-screen container mx-auto px-4 sm:px-6 md:px-8 py-6 overflow-x-hidden font-[family-name:var(--font-geist-sans)]">
+      <main className="flex-1 flex flex-col items-center sm:items-start w-full">
         {/* Logo */}
         <div className="w-full flex justify-center mb-8">
           <Image
@@ -120,34 +142,36 @@ export default function HomeContent() {
           {areaSqm !== null && <UnitToggle />}
         </div>
         
-        {/* Map and Data Container with relative positioning */}
-        <div className="w-full flex items-center justify-center" style={{ position: 'relative' }}>
-          {/* Map Container */}
-          <div className="w-3/4" style={{ aspectRatio: '1/1' }}>
-            <Map center={center} onPolygonComplete={handlePolygonComplete} />
-          </div>
-          
-          {/* Data Container - Absolutely positioned */}
-          <div style={{ position: 'absolute', top: '100%', width: '100%', marginTop: '20px' }}>
-            {/* Loading */}
-            {isLoading && areaSqm != null && (
-              <div className="w-full text-center">
-                <p className="text-lg sm:text-xl">Loading...</p>
-              </div>
-            )}
-            
-            {/* Report */}
-            {!isLoading && hasData && (
-              <ReportDownload
-                address={address}
-                areaSqm={areaSqm}
-                monthlySolar={monthlySolar}
-                monthlyPrecip={monthlyPrecip}
-              />
-            )}
-          </div>
+        {/* Map Container - Back in normal flow */}
+        <div ref={mapContainerRef} className="w-3/4 mx-auto mb-4" style={{ aspectRatio: '1/1' }}>
+          <Map center={center} onPolygonComplete={handlePolygonComplete} />
         </div>
+
+        {/* Loading - Back in normal flow */}
+        {isLoading && areaSqm != null && (
+          <div className="w-full text-center py-4">
+            <p className="text-lg sm:text-xl">Loading...</p>
+          </div>
+        )}
+
+        {/* Report - Back in normal flow */}
+        {!isLoading && hasData && (
+          <div className="w-full mt-0">
+            <ReportDownload
+              address={address}
+              areaSqm={areaSqm}
+              monthlySolar={monthlySolar}
+              monthlyPrecip={monthlyPrecip}
+              mapImageDataUrl={mapImageDataUrl}
+            />
+          </div>
+        )}
       </main>
+      <footer className="w-full bg-gray-50 text-gray-600 py-8 mt-20">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
+          <p className="text-center text-sm">© {new Date().getFullYear()} Stephen Cropper • <a href="https://buymeacoffee.com/cropper" target="_blank" rel="noopener noreferrer" className="inline-block ml-2 px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500">☕</a></p>
+        </div>
+      </footer>
     </div>
   );
 } 
