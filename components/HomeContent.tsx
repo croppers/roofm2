@@ -125,7 +125,7 @@ export default function HomeContent() {
         {/* Description */}
         <div className="w-3/4 mx-auto mb-6 text-center text-gray-700">
           <p>
-            Roofm² makes it easy to estimate your roof's area and analyze monthly solar radiation and precipitation at your home. Search for your address, draw your roof outline on the map, and view interactive charts of energy and water capture. Download a detailed PDF report when you're ready.
+            Roofm² makes it easy to estimate your roof&apos;s area and analyze monthly solar radiation and precipitation at your home. Search for your address, draw your roof outline on the map, and view interactive charts of energy and water capture. Download a detailed PDF report when you&apos;re ready.
           </p>
         </div>
         {/* Grouped Address, Controls, and Map with uniform spacing */}
