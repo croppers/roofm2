@@ -41,20 +41,16 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
   const precipData = months.map((_,i) => monthlyPrecip[String(i+1)] ?? 0);
   
+  // Prepare water unit label (daily) for area plot
+  const waterUnitText = units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)';
+  
+  // Days in each month (for monthly calculations)
+  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  
   // Convert solar radiation from MJ/m²/day to kWh/m²/day (1 kWh = 3.6 MJ)
   const MJ_TO_KWH = 1 / 3.6;
   const solarDataKwh = solarData.map(v => v * MJ_TO_KWH);
 
-  // Convert precipitation data if using imperial units
-  const displayPrecipData = units === 'imperial' 
-    ? precipData.map(value => value * 0.0393701) // mm to inches
-    : precipData;
-    
-  const precipUnitText = units === 'imperial' ? 'Precip (inches/day)' : 'Precip (mm/day)';
-  const waterUnitText = units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)';
-
-  // Days in each month for monthly climatologies
-  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   // Convert daily values to monthly
   const solarDataMonthlyKwh = solarDataKwh.map((v, i) => v * daysInMonth[i]);
   const precipMonthlyRaw = precipData.map((v, i) => v * daysInMonth[i]); // mm/month
