@@ -38,8 +38,8 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const [roofCoverage, setRoofCoverage] = useState(0.6); // Default 60%
 
   // State for harvesting plan
-  const [storageCapacity, setStorageCapacity] = useState(units === 'imperial' ? 1000 : 4000); // Default 1000 gal or 4000 L
-  const [dailyUsage, setDailyUsage] = useState(units === 'imperial' ? 50 : 200); // Default 50 gal or 200 L
+  const [storageCapacity, setStorageCapacity] = useState(units === 'imperial' ? 100 : 400); // Default 100 gal or 400 L
+  const [dailyUsage, setDailyUsage] = useState(units === 'imperial' ? 80 : 300); // Default 80 gal or 300 L
 
   // Exponential distribution sampler for daily precipitation
   const exponentialSample = (mean: number): number => {
@@ -573,7 +573,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
                 value={storageCapacity}
                 onChange={(e) => setStorageCapacity(Math.max(0, parseInt(e.target.value) || 0))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder={units === 'imperial' ? 'e.g., 1000' : 'e.g., 4000'}
+                placeholder={units === 'imperial' ? 'e.g., 100' : 'e.g., 400'}
               />
               <p className="mt-1 text-xs text-gray-500">
                 Total non-potable water storage capacity
@@ -592,7 +592,7 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
                 value={dailyUsage}
                 onChange={(e) => setDailyUsage(Math.max(0, parseInt(e.target.value) || 0))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder={units === 'imperial' ? 'e.g., 50' : 'e.g., 200'}
+                placeholder={units === 'imperial' ? 'e.g., 80' : 'e.g., 300'}
               />
               <p className="mt-1 text-xs text-gray-500">
                 Daily usage for irrigation, toilet flushing, etc.
