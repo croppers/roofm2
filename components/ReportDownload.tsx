@@ -37,15 +37,87 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
   const [panelEfficiency, setPanelEfficiency] = useState(0.2); // Default 20%
   const [roofCoverage, setRoofCoverage] = useState(0.6); // Default 60%
 
+  // State for harvesting plan
+  const [storageCapacity, setStorageCapacity] = useState(units === 'imperial' ? 1000 : 4000); // Default 1000 gal or 4000 L
+  const [dailyUsage, setDailyUsage] = useState(units === 'imperial' ? 50 : 200); // Default 50 gal or 200 L
+
+  // Exponential distribution sampler for daily precipitation
+  const exponentialSample = (mean: number): number => {
+    if (mean <= 0) return 0;
+    // Using exponential distribution to model daily precipitation amounts
+    return -mean * Math.log(1 - Math.random());
+  };
+
+  // Run harvesting simulation
+  const runHarvestingSimulation = () => {
+    const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    
+    let storage = 0;
+    const dailyCaptured: number[] = [];
+    const dailyCoveragePercent: number[] = [];
+    
+    months.forEach(month => {
+      const monthlyPrecipMm = monthlyPrecip[String(month + 1)] || 0;
+      const dailyMeanPrecipMm = monthlyPrecipMm; // Already in mm/day
+      
+      for (let day = 0; day < daysInMonth[month]; day++) {
+        // Sample daily precipitation using exponential distribution
+        const dailyPrecipMm = exponentialSample(dailyMeanPrecipMm);
+        
+        // Calculate water captured (applying efficiency)
+        const capturedLiters = dailyPrecipMm * areaSqm * waterEfficiency;
+        const capturedVolume = units === 'imperial' 
+          ? capturedLiters * 0.264172 // Convert to gallons
+          : capturedLiters;
+        
+        // Add to storage (up to capacity)
+        const spaceAvailable = storageCapacity - storage;
+        const actualCaptured = Math.min(capturedVolume, spaceAvailable);
+        storage += actualCaptured;
+        
+        // Calculate daily usage from storage
+        const usageFromStorage = Math.min(dailyUsage, storage);
+        storage -= usageFromStorage;
+        
+        // Calculate coverage percentage
+        const coveragePercent = dailyUsage > 0 ? (usageFromStorage / dailyUsage) * 100 : 0;
+        
+        dailyCaptured.push(actualCaptured);
+        dailyCoveragePercent.push(coveragePercent);
+      }
+    });
+    
+    return { dailyCaptured, dailyCoveragePercent };
+  };
+
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const solarData = months.map((_,i) => monthlySolar[String(i+1)] ?? 0);
   const precipData = months.map((_,i) => monthlyPrecip[String(i+1)] ?? 0);
   
+  // Run harvesting simulation when inputs change
+  const { dailyCaptured, dailyCoveragePercent } = runHarvestingSimulation();
+  
+  // Calculate monthly averages for the harvesting chart
+  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let dayIndex = 0;
+  const monthlyAvgCaptured: number[] = [];
+  const monthlyAvgCoverage: number[] = [];
+  
+  daysInMonth.forEach((days) => {
+    const monthDays = dailyCaptured.slice(dayIndex, dayIndex + days);
+    const monthCoverage = dailyCoveragePercent.slice(dayIndex, dayIndex + days);
+    
+    const avgCaptured = monthDays.reduce((sum, val) => sum + val, 0) / days;
+    const avgCoverage = monthCoverage.reduce((sum, val) => sum + val, 0) / days;
+    
+    monthlyAvgCaptured.push(avgCaptured);
+    monthlyAvgCoverage.push(avgCoverage);
+    dayIndex += days;
+  });
+  
   // Prepare water unit label (daily) for area plot
   const waterUnitText = units === 'imperial' ? 'Water (gal/day)' : 'Water (L/day)';
-  
-  // Days in each month (for monthly calculations)
-  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   
   // Convert solar radiation from MJ/m²/day to kWh/m²/day (1 kWh = 3.6 MJ)
   const MJ_TO_KWH = 1 / 3.6;
@@ -190,6 +262,80 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
     ]
   };
 
+  // Harvesting Plan chart options
+  const harvestingOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Non-Potable Water Harvesting Performance',
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        padding: {
+          bottom: 10
+        }
+      },
+      legend: {
+        labels: {
+          boxWidth: 10,
+          font: {
+            size: 11
+          }
+        }
+      }
+    },
+    scales: {
+      y: { 
+        position: 'left', 
+        title: { 
+          display: true, 
+          text: units === 'imperial' ? 'Captured (gal/day avg)' : 'Captured (L/day avg)',
+          font: {
+            size: 11
+          }
+        } 
+      },
+      y1: { 
+        position: 'right', 
+        title: { 
+          display: true, 
+          text: 'Usage Coverage (%)',
+          font: {
+            size: 11
+          }
+        }, 
+        grid: { 
+          drawOnChartArea: false 
+        },
+        min: 0,
+        max: 100
+      }
+    }
+  };
+  
+  const harvestingData = {
+    labels: months,
+    datasets: [
+      { 
+        label: units === 'imperial' ? 'Captured (gal/day)' : 'Captured (L/day)', 
+        data: monthlyAvgCaptured, 
+        borderColor: 'rgba(16,185,129,1)', 
+        backgroundColor: 'rgba(16,185,129,0.1)',
+        yAxisID: 'y' 
+      },
+      { 
+        label: 'Coverage (%)', 
+        data: monthlyAvgCoverage, 
+        borderColor: 'rgba(251,146,60,1)', 
+        backgroundColor: 'rgba(251,146,60,0.1)',
+        yAxisID: 'y1' 
+      }
+    ]
+  };
+
   // Prepare formatted area string for PDF
   const formattedAreaText = units === 'imperial'
     ? `${(areaSqm * 10.7639).toLocaleString(undefined, { maximumFractionDigits: 1 })} ft²`
@@ -264,7 +410,9 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
           doc.text(`Water Efficiency: ${(waterEfficiency * 100).toFixed(0)}%`, 10, currentY + 12);
           doc.text(`Panel Efficiency: ${(panelEfficiency * 100).toFixed(0)}%`, 10, currentY + 19);
           doc.text(`Coverage: ${(roofCoverage * 100).toFixed(0)}%`, 10, currentY + 26);
-          currentY += 30;
+          doc.text(`Storage: ${storageCapacity.toLocaleString()} ${units === 'imperial' ? 'gal' : 'L'}`, 10, currentY + 33);
+          doc.text(`Daily Usage: ${dailyUsage.toLocaleString()} ${units === 'imperial' ? 'gal' : 'L'}`, 10, currentY + 40);
+          currentY += 44;
 
         } catch (e) {
           console.error("Error adding map image to PDF:", e);
@@ -337,6 +485,9 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
         <div className="mb-0 mt-8 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
           <Line options={areaOptions} data={areaData} />
         </div>
+        <div className="mb-0 mt-8 w-3/4 mx-auto h-64 sm:h-80 md:h-96 overflow-hidden py-4">
+          <Line options={harvestingOptions} data={harvestingData} />
+        </div>
       </div>
       {/* Group sliders and button with uniform spacing */}
       <div className="space-y-[3rem] mt-[3rem]">
@@ -402,6 +553,54 @@ export default function ReportDownload({ address, areaSqm, monthlySolar, monthly
             </div>
           </div>
         </div>
+        
+        {/* Your Harvesting Plan Section */}
+        <div className="w-3/4 mx-auto">
+          <h2 className="text-xl font-bold text-center mb-6">Your Harvesting Plan</h2>
+          <p className="text-sm text-gray-600 text-center mb-6">
+            Model non-potable water harvesting with storage capacity and daily usage
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-3/4 mx-auto">
+            {/* Storage Capacity Input */}
+            <div>
+              <label htmlFor="storageCapacity" className="block text-sm font-medium text-gray-700 mb-2">
+                Storage Capacity ({units === 'imperial' ? 'gallons' : 'liters'})
+              </label>
+              <input
+                id="storageCapacity"
+                type="number"
+                min="0"
+                value={storageCapacity}
+                onChange={(e) => setStorageCapacity(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder={units === 'imperial' ? 'e.g., 1000' : 'e.g., 4000'}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Total non-potable water storage capacity
+              </p>
+            </div>
+            
+            {/* Daily Usage Input */}
+            <div>
+              <label htmlFor="dailyUsage" className="block text-sm font-medium text-gray-700 mb-2">
+                Daily Non-Potable Water Usage ({units === 'imperial' ? 'gallons' : 'liters'})
+              </label>
+              <input
+                id="dailyUsage"
+                type="number"
+                min="0"
+                value={dailyUsage}
+                onChange={(e) => setDailyUsage(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder={units === 'imperial' ? 'e.g., 50' : 'e.g., 200'}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Daily usage for irrigation, toilet flushing, etc.
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="flex justify-center">
           <button
             onClick={downloadPDF}
