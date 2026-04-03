@@ -93,7 +93,7 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
   }, [center]);
 
   return (
-    <div className="rounded-xl overflow-hidden shadow-lg ring-1 ring-gray-200 dark:ring-gray-700" style={{ aspectRatio: '4/3' }}>
+    <div className="rounded-xl overflow-hidden shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 h-full">
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );

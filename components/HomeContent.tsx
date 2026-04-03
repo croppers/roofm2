@@ -25,10 +25,10 @@ export default function HomeContent() {
   const acres = sqm / 4046.86;
 
   return (
-    <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)]">
+    <div className="flex flex-col h-screen overflow-hidden font-[family-name:var(--font-geist-sans)]">
       {/* Header */}
-      <header className="w-full bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-700 dark:to-primary-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <header className="shrink-0 w-full bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-700 dark:to-primary-600">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Image
               src="/@roofm2_logo.svg"
@@ -36,55 +36,58 @@ export default function HomeContent() {
               width={576}
               height={174}
               priority
-              className="h-16 sm:h-24 w-auto brightness-0 invert"
+              className="h-8 sm:h-12 w-auto brightness-0 invert"
             />
             <ThemeToggle />
           </div>
-          <p className="text-white/80 text-sm sm:text-base mt-2">
+          <p className="text-white/80 text-xs sm:text-sm mt-1">
             Measure Any Roof or Area from Satellite Imagery
           </p>
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+      {/* Main - fills remaining space */}
+      <main className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto px-4 sm:px-6 py-3 gap-3">
           {/* Search */}
-          <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
+          <div className="shrink-0">
+            <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
+          </div>
 
-          {/* Map */}
-          <Map center={center} onPolygonComplete={handlePolygonComplete} />
+          {/* Map - fills remaining space */}
+          <div className="flex-1 min-h-0">
+            <Map center={center} onPolygonComplete={handlePolygonComplete} />
+          </div>
 
-          {/* Hint */}
-          {areaSqm === null && (
-            <p className="text-center text-sm text-gray-400 dark:text-gray-500">
-              Use the polygon tool on the map to outline your roof
-            </p>
-          )}
-
-          {/* Area */}
-          {areaSqm !== null && (
-            <div className="card overflow-hidden">
-              <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700">
-                {[
-                  { value: sqft.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'ft²' },
-                  { value: sqm.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'm²' },
-                  { value: acres.toLocaleString(undefined, { maximumFractionDigits: 3 }), unit: 'acres' },
-                ].map(({ value, unit }) => (
-                  <div key={unit} className="py-5 text-center">
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wider">{unit}</p>
-                  </div>
-                ))}
+          {/* Area or Hint */}
+          <div className="shrink-0">
+            {areaSqm === null ? (
+              <p className="text-center text-xs sm:text-sm text-gray-400 dark:text-gray-500 py-1">
+                Use the polygon tool on the map to outline your roof
+              </p>
+            ) : (
+              <div className="card overflow-hidden">
+                <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700">
+                  {[
+                    { value: sqft.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'ft²' },
+                    { value: sqm.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'm²' },
+                    { value: acres.toLocaleString(undefined, { maximumFractionDigits: 3 }), unit: 'acres' },
+                  ].map(({ value, unit }) => (
+                    <div key={unit} className="py-3 sm:py-4 text-center">
+                      <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wider">{unit}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      <footer className="shrink-0 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-2">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <span className="text-xs text-gray-400 dark:text-gray-500">
             &copy; {new Date().getFullYear()} Stephen Cropper
           </span>
