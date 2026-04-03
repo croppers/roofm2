@@ -40,6 +40,9 @@ export default function HomeContent() {
             />
             <ThemeToggle />
           </div>
+          <p className="text-white/80 text-sm sm:text-base mt-2">
+            A Tool to Estimate Roof or Field Areas
+          </p>
         </div>
       </header>
 
