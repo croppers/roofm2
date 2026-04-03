@@ -30,6 +30,9 @@ export default function Map({ center, onPolygonComplete, outlineCoords }: MapPro
       fillOpacity: 0.3,
     });
     drawnItems.addLayer(polygon);
+    if (mapRef.current) {
+      mapRef.current.fitBounds(polygon.getBounds(), { padding: [40, 40], maxZoom: 20 });
+    }
     onPolygonCompleteRef.current(coords);
   }, []);
 
