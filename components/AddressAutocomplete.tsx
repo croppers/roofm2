@@ -1,68 +1,111 @@
 'use client';
-import { useRef } from 'react';
-import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface AddressAutocompleteProps {
   onPlaceSelected: (coords: { lat: number; lng: number }, address: string) => void;
 }
 
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocompleteProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
-    libraries: ['drawing', 'places'],
-  });
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
-    autocompleteRef.current = autocomplete;
-  };
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
-  const onPlaceChanged = () => {
-    const place = autocompleteRef.current?.getPlace();
-    if (place?.geometry?.location) {
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
-      const formatted = place.formatted_address || '';
-      onPlaceSelected({ lat, lng }, formatted);
+  const searchAddress = useCallback(async (q: string) => {
+    if (q.length < 3) {
+      setResults([]);
+      setIsOpen(false);
+      return;
     }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data: NominatimResult[] = await res.json();
+      setResults(data);
+      setIsOpen(data.length > 0);
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchAddress(value), 400);
   };
 
-  if (loadError) {
-    return (
-      <div className="card p-4 text-center">
-        <p className="text-red-600 dark:text-red-400 font-medium">Failed to load address search</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Please check your connection and refresh the page.</p>
-      </div>
+  const handleSelect = (result: NominatimResult) => {
+    setQuery(result.display_name);
+    setIsOpen(false);
+    setResults([]);
+    onPlaceSelected(
+      { lat: parseFloat(result.lat), lng: parseFloat(result.lon) },
+      result.display_name
     );
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center p-4 gap-3">
-        <svg className="animate-spin h-5 w-5 text-primary-500" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <span className="text-gray-500 dark:text-gray-400 text-sm">Loading address search...</span>
-      </div>
-    );
-  }
+  };
 
   return (
-    <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+    <div ref={containerRef} className="relative">
       <div className="relative">
         <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
-          ref={inputRef}
           type="text"
+          value={query}
+          onChange={e => handleChange(e.target.value)}
           placeholder="Search for an address..."
           className="input-field pl-11"
         />
+        {isLoading && (
+          <svg className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        )}
       </div>
-    </Autocomplete>
+
+      {isOpen && results.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {results.map((r, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                onClick={() => handleSelect(r)}
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
+              >
+                {r.display_name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

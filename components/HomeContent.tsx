@@ -1,8 +1,8 @@
 'use client';
 import Image from "next/image";
+import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Map from './Map';
 import AddressAutocomplete from './AddressAutocomplete';
 import UnitToggle from './UnitToggle';
 import ThemeToggle from './ThemeToggle';
@@ -11,10 +11,12 @@ import { calculateAreaSqMeters, getPolygonCentroid } from '../utils/area';
 import { roundDecimal } from '../utils/unitConversion';
 import html2canvas from 'html2canvas';
 
+// Leaflet must be loaded client-side only (no SSR)
+const Map = dynamic(() => import('./Map'), { ssr: false });
+
 export default function HomeContent() {
-  const [center, setCenter] = useState<google.maps.LatLngLiteral>({ lat: 37.7749, lng: -122.4194 });
+  const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 37.7749, lng: -122.4194 });
   const [address, setAddress] = useState<string>('');
-  const [polygons, setPolygons] = useState<google.maps.Polygon[]>([]);
   const [areaSqm, setAreaSqm] = useState<number | null>(null);
   const [formattedArea, setFormattedArea] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +49,13 @@ export default function HomeContent() {
     setError(null);
   };
 
-  const handlePolygonComplete = async (polygon: google.maps.Polygon, coords: google.maps.LatLngLiteral[]) => {
-    polygons.forEach(p => p.setMap(null));
-    setPolygons([polygon]);
+  const handlePolygonComplete = async (coords: { lat: number; lng: number }[]) => {
+    if (coords.length === 0) {
+      // Polygon was deleted
+      clearData();
+      return;
+    }
+
     const sqm = calculateAreaSqMeters(coords);
     setAreaSqm(roundDecimal(sqm));
     setIsLoading(true);
@@ -87,9 +93,7 @@ export default function HomeContent() {
     }
   };
 
-  const clearPolygons = () => {
-    polygons.forEach(p => p.setMap(null));
-    setPolygons([]);
+  const clearData = () => {
     setAreaSqm(null);
     setMapImageDataUrl(null);
     setMonthlySolar({});
@@ -140,10 +144,7 @@ export default function HomeContent() {
           {areaSqm !== null && (
             <div className="card p-4">
               <div className="flex items-center justify-between gap-4">
-                <button onClick={clearPolygons} className="btn-danger text-xs sm:text-sm">
-                  Clear
-                </button>
-                <div className="text-center">
+                <div className="text-center flex-1">
                   <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Roof Area</span>
                   <p className="font-bold text-lg sm:text-xl text-gray-800 dark:text-gray-100">{formattedArea}</p>
                 </div>
