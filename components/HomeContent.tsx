@@ -93,7 +93,7 @@ export default function HomeContent() {
               width={576}
               height={174}
               priority
-              className="h-8 sm:h-12 w-auto brightness-0 invert"
+              className="h-10 sm:h-16 w-auto brightness-0 invert"
             />
             <ThemeToggle />
           </div>

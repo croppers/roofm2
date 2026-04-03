@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   title: "Roofm² Estimator",
   description: "Estimate roof area and analyze solar radiation and rainwater capture potential for your property",
   icons: {
-    icon: '/@roofm2_logo.svg',
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
   },
 };
 
