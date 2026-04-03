@@ -97,10 +97,10 @@ export default function HomeContent() {
   const acres = sqm / 4046.86;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden font-[family-name:var(--font-geist-sans)]">
+    <div className="flex flex-col h-dvh overflow-hidden font-[family-name:var(--font-geist-sans)]">
       {/* Header */}
       <header className="shrink-0 w-full bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-700 dark:to-primary-600">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 sm:py-4">
           <div className="flex items-center justify-between">
             <Image
               src="/@roofm2_logo.svg"
@@ -108,11 +108,11 @@ export default function HomeContent() {
               width={576}
               height={174}
               priority
-              className="h-20 sm:h-32 w-auto brightness-0 invert"
+              className="h-10 sm:h-32 w-auto brightness-0 invert"
             />
             <ThemeToggle />
           </div>
-          <p className="text-white/80 text-xs sm:text-sm mt-1">
+          <p className="text-white/80 text-xs sm:text-sm mt-0.5 sm:mt-1">
             Measure Any Roof or Area from Satellite Imagery
           </p>
         </div>
@@ -120,7 +120,7 @@ export default function HomeContent() {
 
       {/* Main */}
       <main className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-900">
-        <div className="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto px-4 sm:px-6 py-3 gap-3">
+        <div className="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto px-4 sm:px-6 py-2 sm:py-3 gap-2 sm:gap-3">
           {/* Search + Auto-outline */}
           <div className="shrink-0">
             <AddressAutocomplete
@@ -172,9 +172,9 @@ export default function HomeContent() {
                     { value: sqm.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'm²' },
                     { value: acres.toLocaleString(undefined, { maximumFractionDigits: 3 }), unit: 'acres' },
                   ].map(({ value, unit }) => (
-                    <div key={unit} className="py-3 sm:py-4 text-center">
-                      <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wider">{unit}</p>
+                    <div key={unit} className="py-2 sm:py-4 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">{unit}</p>
                     </div>
                   ))}
                 </div>
