@@ -1,23 +1,80 @@
 'use client';
 import Image from "next/image";
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AddressAutocomplete from './AddressAutocomplete';
 import ThemeToggle from './ThemeToggle';
 import { calculateAreaSqMeters } from '../utils/area';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 
+async function fetchBuildingFootprint(lat: number, lng: number): Promise<{ lat: number; lng: number }[] | null> {
+  const query = `[out:json][timeout:10];way["building"](around:50,${lat},${lng});out geom;`;
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: `data=${encodeURIComponent(query)}`,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+
+  const buildings = data.elements?.filter(
+    (el: { type: string; geometry?: unknown[] }) => el.type === 'way' && el.geometry?.length > 0
+  );
+  if (!buildings || buildings.length === 0) return null;
+
+  // Pick the building whose centroid is closest to the search point
+  let best = buildings[0];
+  let bestDist = Infinity;
+  for (const b of buildings) {
+    const geom = b.geometry as { lat: number; lon: number }[];
+    const cx = geom.reduce((s: number, p: { lat: number }) => s + p.lat, 0) / geom.length;
+    const cy = geom.reduce((s: number, p: { lon: number }) => s + p.lon, 0) / geom.length;
+    const dist = (cx - lat) ** 2 + (cy - lng) ** 2;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = b;
+    }
+  }
+
+  const coords = (best.geometry as { lat: number; lon: number }[]).map(
+    (p: { lat: number; lon: number }) => ({ lat: p.lat, lng: p.lon })
+  );
+  return coords;
+}
+
 export default function HomeContent() {
   const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 37.7749, lng: -122.4194 });
   const [areaSqm, setAreaSqm] = useState<number | null>(null);
+  const [outlineCoords, setOutlineCoords] = useState<{ lat: number; lng: number }[] | null>(null);
+  const [autoLoading, setAutoLoading] = useState(false);
+  const [autoError, setAutoError] = useState<string | null>(null);
 
   const handlePlaceSelected = (coords: { lat: number; lng: number }) => {
     setCenter(coords);
+    setAutoError(null);
   };
 
-  const handlePolygonComplete = (coords: { lat: number; lng: number }[]) => {
+  const handlePolygonComplete = useCallback((coords: { lat: number; lng: number }[]) => {
     setAreaSqm(coords.length === 0 ? null : calculateAreaSqMeters(coords));
+  }, []);
+
+  const handleAutoOutline = async () => {
+    setAutoLoading(true);
+    setAutoError(null);
+    try {
+      const coords = await fetchBuildingFootprint(center.lat, center.lng);
+      if (coords) {
+        setOutlineCoords(coords);
+        setAreaSqm(calculateAreaSqMeters(coords));
+      } else {
+        setAutoError('No building found at this location');
+      }
+    } catch {
+      setAutoError('Failed to fetch building data');
+    } finally {
+      setAutoLoading(false);
+    }
   };
 
   const sqm = areaSqm ?? 0;
@@ -46,24 +103,49 @@ export default function HomeContent() {
         </div>
       </header>
 
-      {/* Main - fills remaining space */}
+      {/* Main */}
       <main className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-900">
         <div className="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto px-4 sm:px-6 py-3 gap-3">
-          {/* Search */}
-          <div className="shrink-0">
-            <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
+          {/* Search + Auto-outline */}
+          <div className="shrink-0 flex gap-2">
+            <div className="flex-1">
+              <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
+            </div>
+            <button
+              type="button"
+              onClick={handleAutoOutline}
+              disabled={autoLoading}
+              className="px-3 sm:px-4 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap"
+            >
+              {autoLoading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zm16 0a1 1 0 00-1-1h-4a1 1 0 000 2h3v3a1 1 0 002 0V5zM4 19a1 1 0 001 1h4a1 1 0 000-2H6v-3a1 1 0 00-2 0v4zm16 0a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 012 0v4z" />
+                </svg>
+              )}
+              <span className="hidden sm:inline">Auto-outline</span>
+            </button>
           </div>
 
-          {/* Map - fills remaining space */}
+          {/* Auto-outline error */}
+          {autoError && (
+            <p className="shrink-0 text-center text-xs text-red-500 dark:text-red-400">{autoError}</p>
+          )}
+
+          {/* Map */}
           <div className="flex-1 min-h-0">
-            <Map center={center} onPolygonComplete={handlePolygonComplete} />
+            <Map center={center} onPolygonComplete={handlePolygonComplete} outlineCoords={outlineCoords} />
           </div>
 
           {/* Area or Hint */}
           <div className="shrink-0">
             {areaSqm === null ? (
               <p className="text-center text-xs sm:text-sm text-gray-400 dark:text-gray-500 py-1">
-                Use the polygon tool on the map to outline your roof
+                Use the polygon tool or Auto-outline to measure an area
               </p>
             ) : (
               <div className="card overflow-hidden">

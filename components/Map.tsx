@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
@@ -8,12 +8,30 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 interface MapProps {
   center: { lat: number; lng: number };
   onPolygonComplete: (coords: { lat: number; lng: number }[]) => void;
+  outlineCoords?: { lat: number; lng: number }[] | null;
 }
 
-export default function Map({ center, onPolygonComplete }: MapProps) {
+export default function Map({ center, onPolygonComplete, outlineCoords }: MapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
+  const onPolygonCompleteRef = useRef(onPolygonComplete);
+  onPolygonCompleteRef.current = onPolygonComplete;
+
+  const drawPolygon = useCallback((coords: { lat: number; lng: number }[]) => {
+    const drawnItems = drawnItemsRef.current;
+    if (!drawnItems || coords.length === 0) return;
+
+    drawnItems.clearLayers();
+    const latlngs = coords.map(c => L.latLng(c.lat, c.lng));
+    const polygon = L.polygon(latlngs, {
+      color: '#3b82f6',
+      weight: 2,
+      fillOpacity: 0.3,
+    });
+    drawnItems.addLayer(polygon);
+    onPolygonCompleteRef.current(coords);
+  }, []);
 
   // Initialize map once
   useEffect(() => {
@@ -25,18 +43,15 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
       zoomControl: true,
     });
 
-    // Esri World Imagery - free satellite tiles, no API key
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
       maxZoom: 20,
     }).addTo(map);
 
-    // Drawing layer
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     drawnItemsRef.current = drawnItems;
 
-    // Drawing control - polygon only
     const drawControl = new L.Control.Draw({
       position: 'topright',
       draw: {
@@ -60,20 +75,27 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
     });
     map.addControl(drawControl);
 
-    // Handle polygon creation
     map.on(L.Draw.Event.CREATED, (e: L.LeafletEvent) => {
       const event = e as L.DrawEvents.Created;
       drawnItems.clearLayers();
       drawnItems.addLayer(event.layer);
-
       const latlngs = (event.layer as L.Polygon).getLatLngs()[0] as L.LatLng[];
       const coords = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }));
-      onPolygonComplete(coords);
+      onPolygonCompleteRef.current(coords);
     });
 
-    // Handle polygon deletion
     map.on(L.Draw.Event.DELETED, () => {
-      onPolygonComplete([]);
+      onPolygonCompleteRef.current([]);
+    });
+
+    // Recalculate area after editing
+    map.on(L.Draw.Event.EDITED, () => {
+      const layers = drawnItems.getLayers();
+      if (layers.length > 0) {
+        const latlngs = (layers[0] as L.Polygon).getLatLngs()[0] as L.LatLng[];
+        const coords = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }));
+        onPolygonCompleteRef.current(coords);
+      }
     });
 
     mapRef.current = map;
@@ -91,6 +113,13 @@ export default function Map({ center, onPolygonComplete }: MapProps) {
       mapRef.current.setView([center.lat, center.lng], 18);
     }
   }, [center]);
+
+  // Draw auto-outline when outlineCoords changes
+  useEffect(() => {
+    if (outlineCoords && outlineCoords.length > 0) {
+      drawPolygon(outlineCoords);
+    }
+  }, [outlineCoords, drawPolygon]);
 
   return (
     <div className="rounded-xl overflow-hidden shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 h-full">
