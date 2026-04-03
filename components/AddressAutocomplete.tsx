@@ -6,33 +6,38 @@ interface AddressAutocompleteProps {
   extraButton?: React.ReactNode;
 }
 
-interface PhotonFeature {
-  geometry: { coordinates: [number, number] };
-  properties: {
-    name?: string;
-    housenumber?: string;
-    street?: string;
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+  address?: {
+    house_number?: string;
+    road?: string;
     city?: string;
+    town?: string;
+    village?: string;
     state?: string;
     postcode?: string;
     country?: string;
   };
 }
 
-function formatAddress(p: PhotonFeature['properties']): string {
+function formatAddress(r: NominatimResult): string {
+  const a = r.address;
+  if (!a) return r.display_name;
   const parts: string[] = [];
-  if (p.housenumber && p.street) parts.push(`${p.housenumber} ${p.street}`);
-  else if (p.street) parts.push(p.street);
-  else if (p.name) parts.push(p.name);
-  if (p.city) parts.push(p.city);
-  if (p.state) parts.push(p.state);
-  if (p.postcode) parts.push(p.postcode);
-  return parts.join(', ');
+  if (a.house_number && a.road) parts.push(`${a.house_number} ${a.road}`);
+  else if (a.road) parts.push(a.road);
+  const city = a.city || a.town || a.village;
+  if (city) parts.push(city);
+  if (a.state) parts.push(a.state);
+  if (a.postcode) parts.push(a.postcode);
+  return parts.length > 0 ? parts.join(', ') : r.display_name;
 }
 
 export default function AddressAutocomplete({ onPlaceSelected, extraButton }: AddressAutocompleteProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<PhotonFeature[]>([]);
+  const [results, setResults] = useState<NominatimResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,12 +62,12 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
     setIsLoading(true);
     try {
       const res = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=en`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1&countrycodes=us`,
+        { headers: { 'Accept-Language': 'en' } }
       );
-      const data = await res.json();
-      const features: PhotonFeature[] = data.features ?? [];
-      setResults(features);
-      setIsOpen(features.length > 0);
+      const data: NominatimResult[] = await res.json();
+      setResults(data);
+      setIsOpen(data.length > 0);
     } catch (err) {
       console.error('Geocoding error:', err);
       setResults([]);
@@ -77,13 +82,15 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
     debounceRef.current = setTimeout(() => searchAddress(value), 300);
   };
 
-  const handleSelect = (feature: PhotonFeature) => {
-    const label = formatAddress(feature.properties);
+  const handleSelect = (result: NominatimResult) => {
+    const label = formatAddress(result);
     setQuery(label);
     setIsOpen(false);
     setResults([]);
-    const [lon, lat] = feature.geometry.coordinates;
-    onPlaceSelected({ lat, lng: lon }, label);
+    onPlaceSelected(
+      { lat: parseFloat(result.lat), lng: parseFloat(result.lon) },
+      label
+    );
   };
 
   const handleSearch = () => {
@@ -138,14 +145,14 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
 
       {isOpen && results.length > 0 && (
         <ul className="absolute z-[10000] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {results.map((f, i) => (
+          {results.map((r, i) => (
             <li key={i}>
               <button
                 type="button"
-                onClick={() => handleSelect(f)}
+                onClick={() => handleSelect(r)}
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
               >
-                {formatAddress(f.properties)}
+                {formatAddress(r)}
               </button>
             </li>
           ))}

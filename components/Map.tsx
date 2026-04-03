@@ -48,7 +48,8 @@ export default function Map({ center, onPolygonComplete, outlineCoords }: MapPro
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri',
-      maxZoom: 20,
+      maxZoom: 21,
+      maxNativeZoom: 19,
     }).addTo(map);
 
     const drawnItems = new L.FeatureGroup();
