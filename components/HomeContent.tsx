@@ -41,7 +41,7 @@ export default function HomeContent() {
             <ThemeToggle />
           </div>
           <p className="text-white/80 text-sm sm:text-base mt-2">
-            Satellite-Based Area Estimation
+            Measure Any Roof or Area from Satellite Imagery
           </p>
         </div>
       </header>
