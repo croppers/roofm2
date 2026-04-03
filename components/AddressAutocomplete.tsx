@@ -6,15 +6,33 @@ interface AddressAutocompleteProps {
   extraButton?: React.ReactNode;
 }
 
-interface NominatimResult {
-  display_name: string;
-  lat: string;
-  lon: string;
+interface PhotonFeature {
+  geometry: { coordinates: [number, number] };
+  properties: {
+    name?: string;
+    housenumber?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+}
+
+function formatAddress(p: PhotonFeature['properties']): string {
+  const parts: string[] = [];
+  if (p.housenumber && p.street) parts.push(`${p.housenumber} ${p.street}`);
+  else if (p.street) parts.push(p.street);
+  else if (p.name) parts.push(p.name);
+  if (p.city) parts.push(p.city);
+  if (p.state) parts.push(p.state);
+  if (p.postcode) parts.push(p.postcode);
+  return parts.join(', ');
 }
 
 export default function AddressAutocomplete({ onPlaceSelected, extraButton }: AddressAutocompleteProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [results, setResults] = useState<PhotonFeature[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,12 +57,12 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
     setIsLoading(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=en`
       );
-      const data: NominatimResult[] = await res.json();
-      setResults(data);
-      setIsOpen(data.length > 0);
+      const data = await res.json();
+      const features: PhotonFeature[] = data.features ?? [];
+      setResults(features);
+      setIsOpen(features.length > 0);
     } catch (err) {
       console.error('Geocoding error:', err);
       setResults([]);
@@ -56,17 +74,16 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
   const handleChange = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => searchAddress(value), 400);
+    debounceRef.current = setTimeout(() => searchAddress(value), 300);
   };
 
-  const handleSelect = (result: NominatimResult) => {
-    setQuery(result.display_name);
+  const handleSelect = (feature: PhotonFeature) => {
+    const label = formatAddress(feature.properties);
+    setQuery(label);
     setIsOpen(false);
     setResults([]);
-    onPlaceSelected(
-      { lat: parseFloat(result.lat), lng: parseFloat(result.lon) },
-      result.display_name
-    );
+    const [lon, lat] = feature.geometry.coordinates;
+    onPlaceSelected({ lat, lng: lon }, label);
   };
 
   const handleSearch = () => {
@@ -107,14 +124,14 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
 
       {isOpen && results.length > 0 && (
         <ul className="absolute z-[10000] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {results.map((r, i) => (
+          {results.map((f, i) => (
             <li key={i}>
               <button
                 type="button"
-                onClick={() => handleSelect(r)}
+                onClick={() => handleSelect(f)}
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
               >
-                {r.display_name}
+                {formatAddress(f.properties)}
               </button>
             </li>
           ))}
