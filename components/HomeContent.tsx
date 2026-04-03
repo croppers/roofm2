@@ -10,8 +10,10 @@ const Map = dynamic(() => import('./Map'), { ssr: false });
 
 async function fetchBuildingFootprint(lat: number, lng: number): Promise<{ lat: number; lng: number }[] | null> {
   const query = `[out:json][timeout:10];(way["building"](around:100,${lat},${lng});relation["building"](around:100,${lat},${lng}););out geom;`;
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: new URLSearchParams({ data: query }),
+  });
   if (!res.ok) return null;
   const data = await res.json();
 
