@@ -104,7 +104,7 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
       </div>
 
       {isOpen && results.length > 0 && (
-        <ul className="absolute z-[1000] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <ul className="absolute z-[10000] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {results.map((r, i) => (
             <li key={i}>
               <button
