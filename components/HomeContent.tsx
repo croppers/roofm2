@@ -1,7 +1,7 @@
 'use client';
 import Image from "next/image";
 import dynamic from 'next/dynamic';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import AddressAutocomplete from './AddressAutocomplete';
 import ThemeToggle from './ThemeToggle';
 import { calculateAreaSqMeters } from '../utils/area';
@@ -9,12 +9,9 @@ import { calculateAreaSqMeters } from '../utils/area';
 const Map = dynamic(() => import('./Map'), { ssr: false });
 
 async function fetchBuildingFootprint(lat: number, lng: number): Promise<{ lat: number; lng: number }[] | null> {
-  const query = `[out:json][timeout:10];way["building"](around:50,${lat},${lng});out geom;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: `data=${encodeURIComponent(query)}`,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
+  const query = `[out:json][timeout:10];(way["building"](around:100,${lat},${lng});relation["building"](around:100,${lat},${lng}););out geom;`;
+  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  const res = await fetch(url);
   if (!res.ok) return null;
   const data = await res.json();
 
@@ -49,9 +46,11 @@ export default function HomeContent() {
   const [outlineCoords, setOutlineCoords] = useState<{ lat: number; lng: number }[] | null>(null);
   const [autoLoading, setAutoLoading] = useState(false);
   const [autoError, setAutoError] = useState<string | null>(null);
+  const centerRef = useRef(center);
 
   const handlePlaceSelected = (coords: { lat: number; lng: number }) => {
     setCenter(coords);
+    centerRef.current = coords;
     setAutoError(null);
   };
 
@@ -63,7 +62,8 @@ export default function HomeContent() {
     setAutoLoading(true);
     setAutoError(null);
     try {
-      const coords = await fetchBuildingFootprint(center.lat, center.lng);
+      const { lat, lng } = centerRef.current;
+      const coords = await fetchBuildingFootprint(lat, lng);
       if (coords) {
         setOutlineCoords(coords);
         setAreaSqm(calculateAreaSqMeters(coords));
