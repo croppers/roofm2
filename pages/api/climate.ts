@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const url = new URL(POWER_API_URL);
     url.searchParams.set('latitude', String(lat));
     url.searchParams.set('longitude', String(lng));
-    url.searchParams.set('parameters', 'ALLSKY_SFC_SW_DWN,PRECTOT');
+    url.searchParams.set('parameters', 'ALLSKY_SFC_SW_DWN,PRECTOTCORR');
     url.searchParams.set('community', 'RE');
     url.searchParams.set('format', 'JSON');
 
