@@ -94,14 +94,28 @@ export default function AddressAutocomplete({ onPlaceSelected, extraButton }: Ad
   return (
     <div ref={containerRef} className="relative">
       <div className="flex gap-2">
-        <input
-          type="text"
-          value={query}
-          onChange={e => handleChange(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          placeholder="Search for an address..."
-          className="input-field flex-1"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={query}
+            onChange={e => handleChange(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Search for an address..."
+            className="input-field pr-9"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => { setQuery(''); setResults([]); setIsOpen(false); }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              aria-label="Clear search"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
         <button
           type="button"
           onClick={handleSearch}
