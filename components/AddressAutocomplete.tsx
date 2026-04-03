@@ -19,7 +19,6 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -36,7 +35,6 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
       setIsOpen(false);
       return;
     }
-
     setIsLoading(true);
     try {
       const res = await fetch(
@@ -70,25 +68,39 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
     );
   };
 
+  const handleSearch = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    searchAddress(query);
+  };
+
   return (
     <div ref={containerRef} className="relative">
-      <div className="relative">
-        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+      <div className="flex gap-2">
         <input
           type="text"
           value={query}
           onChange={e => handleChange(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
           placeholder="Search for an address..."
-          className="input-field pl-11"
+          className="input-field flex-1"
         />
-        {isLoading && (
-          <svg className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        )}
+        <button
+          type="button"
+          onClick={handleSearch}
+          className="px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors flex items-center justify-center"
+          aria-label="Search"
+        >
+          {isLoading ? (
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {isOpen && results.length > 0 && (
