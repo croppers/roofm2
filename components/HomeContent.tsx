@@ -10,12 +10,25 @@ const Map = dynamic(() => import('./Map'), { ssr: false });
 
 async function fetchBuildingFootprint(lat: number, lng: number): Promise<{ lat: number; lng: number }[] | null> {
   const query = `[out:json][timeout:10];(way["building"](around:100,${lat},${lng});relation["building"](around:100,${lat},${lng}););out geom;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: new URLSearchParams({ data: query }),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+  ];
+  let data = null;
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        body: new URLSearchParams({ data: query }),
+      });
+      if (!res.ok) continue;
+      data = await res.json();
+      if (data.elements?.length > 0) break;
+    } catch {
+      continue;
+    }
+  }
+  if (!data) return null;
 
   const buildings = data.elements?.filter(
     (el: { type: string; geometry?: unknown[] }) => el.type === 'way' && (el.geometry?.length ?? 0) > 0
