@@ -19,7 +19,7 @@ async function fetchBuildingFootprint(lat: number, lng: number): Promise<{ lat: 
   const data = await res.json();
 
   const buildings = data.elements?.filter(
-    (el: { type: string; geometry?: unknown[] }) => el.type === 'way' && el.geometry?.length > 0
+    (el: { type: string; geometry?: unknown[] }) => el.type === 'way' && (el.geometry?.length ?? 0) > 0
   );
   if (!buildings || buildings.length === 0) return null;
 
@@ -107,28 +107,30 @@ export default function HomeContent() {
       <main className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-gray-900">
         <div className="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto px-4 sm:px-6 py-3 gap-3">
           {/* Search + Auto-outline */}
-          <div className="shrink-0 flex gap-2">
-            <div className="flex-1">
-              <AddressAutocomplete onPlaceSelected={handlePlaceSelected} />
-            </div>
-            <button
-              type="button"
-              onClick={handleAutoOutline}
-              disabled={autoLoading}
-              className="px-3 sm:px-4 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap"
-            >
-              {autoLoading ? (
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zm16 0a1 1 0 00-1-1h-4a1 1 0 000 2h3v3a1 1 0 002 0V5zM4 19a1 1 0 001 1h4a1 1 0 000-2H6v-3a1 1 0 00-2 0v4zm16 0a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 012 0v4z" />
-                </svg>
-              )}
-              <span className="hidden sm:inline">Auto-outline</span>
-            </button>
+          <div className="shrink-0">
+            <AddressAutocomplete
+              onPlaceSelected={handlePlaceSelected}
+              extraButton={
+                <button
+                  type="button"
+                  onClick={handleAutoOutline}
+                  disabled={autoLoading}
+                  className="px-3 sm:px-4 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5 text-sm font-medium whitespace-nowrap"
+                >
+                  {autoLoading ? (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zm16 0a1 1 0 00-1-1h-4a1 1 0 000 2h3v3a1 1 0 002 0V5zM4 19a1 1 0 001 1h4a1 1 0 000-2H6v-3a1 1 0 00-2 0v4zm16 0a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 012 0v4z" />
+                    </svg>
+                  )}
+                  <span className="hidden sm:inline">Auto-outline</span>
+                </button>
+              }
+            />
           </div>
 
           {/* Auto-outline error */}

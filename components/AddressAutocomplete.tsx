@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface AddressAutocompleteProps {
   onPlaceSelected: (coords: { lat: number; lng: number }, address: string) => void;
+  extraButton?: React.ReactNode;
 }
 
 interface NominatimResult {
@@ -11,7 +12,7 @@ interface NominatimResult {
   lon: string;
 }
 
-export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocompleteProps) {
+export default function AddressAutocomplete({ onPlaceSelected, extraButton }: AddressAutocompleteProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -101,6 +102,7 @@ export default function AddressAutocomplete({ onPlaceSelected }: AddressAutocomp
             </svg>
           )}
         </button>
+        {extraButton}
       </div>
 
       {isOpen && results.length > 0 && (
